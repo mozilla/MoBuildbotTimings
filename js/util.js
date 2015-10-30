@@ -24,6 +24,13 @@ var search = function*(query){
 		json: query
 	}));
 
+	Array.newInstance(output.edges).forall(function(e){
+		e.domain.end=function(p){  // EXPECTING EDGES TO HAVE AN end() FUNCTION
+			return p.value;
+		};
+	});
+
 	yield (output);
 };
 
+Settings.host_types["ActiveData"]=search;

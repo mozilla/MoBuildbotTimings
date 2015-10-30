@@ -29,7 +29,7 @@
 </div>
 
 <div style="align:left;position:relative;float:left;width:800px;">
-	<h3 id="title">Buildbot Timings (past 2 days, win32 only)</h3>
+	<h3 id="title">Buildbot Timings (past 2 days average)</h3>
 
 	<div id="details" style="overflow-y: scroll;position:absolute;left:10px;"></div>
 	<!--<div id="chart" class="chart" style="text-align:center;width:800px;height:300px;"></div>-->
@@ -42,15 +42,29 @@
 <script type="application/javascript">
 
 
-importScript(['modevlib/gui/GUI.js', 'js/util.js' ], function(){
+importScript(['modevlib/gui/GUI.js', 'js/util.js', 'modevlib/Dimension-Jobs.js' ], function(){
 
-	var focusFilter = {"and": [
-		{"eq": {"build.platform": "win32"}},
-		{"gt": {"action.start_time": Date.now().subtract(Duration.DAY.multiply(2)).unix()}}
-	]};
+	var current_run = null;
+
+	var __main = function*(this_run){
+
+		current_run = this_run;
+		$("#details").html("");
+
+		var pool = GUI.state.pool.makeFilter();
+		var platform = GUI.state.platform.makeFilter();
+		var product = GUI.state.product.makeFilter();
+		var suite = GUI.state.suite.makeFilter();
+
+		var focusFilter = {"and": [
+			pool,
+			platform,
+			product,
+			suite,
+			{"gt": {"action.start_time": Date.now().subtract(Duration.DAY.multiply(2)).unix()}}
+		]};
 
 
-	var __main = function*(){
 		var all_steps = null;
 
 		var a = Log.action("find steps", true);
@@ -77,6 +91,13 @@ importScript(['modevlib/gui/GUI.js', 'js/util.js' ], function(){
 		} finally {
 			Log.actionDone(a);
 		}//try
+
+		if (all_steps.length==0){
+			if (current_run==this_run){
+				$("#details").html("No data");
+				yield (null);
+			}//endif
+		}//endif
 
 		// DETERMINE THE MOST POPULAR STEPS
 		var populous = Qb.sort(all_steps, {"value": "count", "sort": -1});
@@ -153,7 +174,9 @@ importScript(['modevlib/gui/GUI.js', 'js/util.js' ], function(){
 				{"name": "duration"}
 			];
 
-			$("#details").html(convert.List2HTMLTable(step_timings));
+			if (current_run==this_run) {
+				$("#details").html(convert.List2HTMLTable(step_timings));
+			}//endif
 
 			yield (null);
 		});
@@ -185,18 +208,41 @@ importScript(['modevlib/gui/GUI.js', 'js/util.js' ], function(){
 		if (thread !== undefined)
 			thread.kill();
 		thread = Thread.run(__main());
-//		thread = Thread.run(__testChart());
 	};
-
-	$(document).ready(function(){
-		main();
-	});
 
 	$(document).ready(function(){
 		GUI.setup(main, [
 			{"id":"sampleMin", "name":"Start Date", "type":"time", "default":Date.eod().add("-18week")},
 			{"id":"sampleMax", "name":"End Date", "type":"time", "default":Date.today().ceilingWeek()},
-			{"id":"sampleInterval", "name":"Interval", "type":"duration", "default":"week"}
+			{"id":"sampleInterval", "name":"Interval", "type":"duration", "default":"week"},
+			{"id": "pool", "name": "Pool", "type": PartitionFilter.newInstance({
+				"id": "pool",
+				"name": "pool",
+				"dimension": Mozilla.Timings.Pool,
+				"onlyOne": true,
+				"expandAll": true
+			})},
+			{"id": "platform", "name": "Platform", "type": PartitionFilter.newInstance({
+				"id": "platform",
+				"name": "platform",
+				"dimension": Mozilla.Timings.Platform,
+				"onlyOne": true,
+				"expandAll": true
+			})},
+			{"id": "product", "name": "Product", "default":"firefox", "type": PartitionFilter.newInstance({
+				"id": "product",
+				"name": "product",
+				"dimension": Mozilla.Timings.Product,
+				"onlyOne": true,
+				"expandAll": true
+			})},
+			{"id": "suite", "name": "Suite", "type": PartitionFilter.newInstance({
+				"id": "suite",
+				"name": "suite",
+				"dimension": Mozilla.Timings.Suite,
+				"onlyOne": true,
+				"expandAll": true
+			})}
 		],
 		[
 //			"if (Date.newInstance(sampleMax).subtract(Date.newInstance(sampleMin)).round(Duration.WEEK, 0)>=5) sampleInterval='week'",
@@ -204,7 +250,7 @@ importScript(['modevlib/gui/GUI.js', 'js/util.js' ], function(){
 			"sampleMin=Date.newInstance(sampleMin).floor(Duration.newInstance(sampleInterval)).format('yyyy-MM-dd')",
 			"sampleMax=Date.newInstance(sampleMax).addDay(1).floor(Duration.newInstance(sampleInterval)).addDay(-1).format('yyyy-MM-dd')"
 		],
-		"bugs",
+		"timings",
 		false		//SHOW DEFAULT FILTERS?
 		);
 	});

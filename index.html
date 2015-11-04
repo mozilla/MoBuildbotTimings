@@ -45,6 +45,7 @@
 importScript(['modevlib/gui/GUI.js', 'js/util.js', 'modevlib/Dimension-Jobs.js' ], function(){
 
 	var current_run = null;
+	var since = Date.now().subtract(Duration.WEEK).unix();
 
 	var __main = function*(this_run){
 
@@ -61,7 +62,7 @@ importScript(['modevlib/gui/GUI.js', 'js/util.js', 'modevlib/Dimension-Jobs.js' 
 			platform,
 			product,
 			suite,
-			{"gt": {"action.start_time": Date.now().subtract(Duration.DAY.multiply(2)).unix()}}
+			{"gt": {"action.start_time": since}}
 		]};
 
 

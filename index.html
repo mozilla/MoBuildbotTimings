@@ -18,6 +18,7 @@
 	<hr>
 	<div id="description">
 		View average <b>test</b> timings for each step in BuildBot, or MozHarness.  Filter by pool, platfrom or suite.<br><br>
+		Only steps executed over 10% of the time are shown here.  It is important you select a suite to get a reasonable estimate of the steps involved.  Looking at steps across multiple suites may neglect showing steps unique to particular suites.<br><br>
 		ETL for the builds is not complete, so data will appear to be missing.  Would you like to see it?  Email me <a href="klahnakoski@mozilla.com">klahnakoski@mozilla.com</a>!
 	</div>
 	<hr>
@@ -128,9 +129,21 @@ importScript([
 			}//endif
 		}//endif
 
-		// DETERMINE THE MOST POPULAR STEPS
 		var populous = Qb.sort(all_steps, {"value": "count", "sort": -1});
-		var population = populous[0].count;
+
+		//FIND STEP POSITION OF run-tests
+		var population = populous.map(function(v, i){
+			if (v.step[1]=="run-tests"){
+				return v.count;
+			}//endif
+		});
+		if (population.length==0){
+			$("#details").html("no tests");
+			yield (null);
+		}//endif
+		population = population[0];
+
+		// KEEP THE MOST POPULAR STEPS
 		var stop = 0;
 		populous.forall(function(v, i){
 			if (stop == 0 && i > 0 && v.count * 10 < population){
@@ -184,6 +197,13 @@ importScript([
 			}//try
 
 			step_timings.data = Qb.sort(step_timings.data, "order");
+
+			//FIND NUMBER OF run-tests
+			var num_tests = step_timings.data.map(function(v){
+				if (v.harness && v.harness.step=="run-tests") return v.count;
+			})[0];
+
+
 			step_timings.data.forall(function(v, i){
 				//DO NOT SHOW BUILDER STEP THAT HAS HARNESS SUB-STEPS (TO MINIMIZE CONFUSION)
 				next = step_timings.data[i+1];
@@ -198,7 +218,10 @@ importScript([
 				}//endif
 
 				//COALESCE DURATION
-				v.duration = coalesce(aMath.round(v.h_duration, 0), aMath.round(v.b_duration, 0));
+				v.duration = coalesce(v.h_duration, v.b_duration);
+
+				//NORMALIZE DURATION BASED ON COUNT
+				v.duration = aMath.round(v.duration * v.count/num_tests, 0)
 			});
 
 			//ONLY SHOW step AND duration
@@ -348,7 +371,7 @@ importScript([
 			if (current_run==this_run) {
 				aChart.show({
 					"id": "count",
-					"name": "Count",
+					"name": "Number of `run-tests`",
 					"sheetDiv": "info",
 					"type": "line",
 					"stacked": false,
@@ -381,9 +404,9 @@ importScript([
 
 	$(document).ready(function(){
 		GUI.setup(main, [
-			{"id":"sampleMin", "name":"Start Date", "type":"time", "default":Date.eod().add("-18week")},
-			{"id":"sampleMax", "name":"End Date", "type":"time", "default":Date.today().ceilingWeek()},
-			{"id":"sampleInterval", "name":"Interval", "type":"duration", "default":"week"},
+			{"id":"sampleMin", "name":"Start Date", "type":"time", "default":Date.eod().add("-3week")},
+			{"id":"sampleMax", "name":"End Date", "type":"time", "default":Date.today()},
+			{"id":"sampleInterval", "name":"Interval", "type":"duration", "default":"day"},
 			{"id": "pool", "name": "Pool", "type": PartitionFilter.newInstance({
 				"id": "pool",
 				"name": "pool",

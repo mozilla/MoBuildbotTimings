@@ -19,8 +19,12 @@ importScript("../modevlib/qb/Qb.js");
 
 
 var search = function*(query){
+
+	var source = window.Settings.indexes[query.from];
+	query.from=source.table;
+
 	var output = yield (Rest.post({
-		url: "http://activedata.allizom.org/query",
+		url: source.host+"/query",
 		json: query
 	}));
 

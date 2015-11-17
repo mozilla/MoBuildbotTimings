@@ -499,22 +499,8 @@ SIDE BAR
 
 
 #sidebar {
-    /*opacity: .5;*/
-    -webkit-transition: all linear .25s;
-    -moz-transition: all linear .25s;
-    -o-transition: all linear .25s;
-    -ms-transition: all linear .25s;
-    transition: all linear .25s;
-    float: left;
-    width: 0;
-    padding-left: 10px;
-    padding-top:30px;
+    padding: 30px 10px 10px 10px;
     margin: 0 0 0 0;
-    top:0;
-    bottom:0;
-    overflow: hidden;
-    padding-right: 0;
-    float:left;
 }
 
 .sidebar_name {

@@ -6,9 +6,9 @@
 <HEAD>
 	<script type="text/javascript" src="modevlib/imports/import.js"></script>
 </HEAD>
-<BODY style="position:relative;">
+<BODY style="height:auto;">
 
-<div id="sidebar" style="width:300px;">
+<div id="sidebar" style="width:300px;" layout="tl=page.tl">
 	<br>
 	<br>
 	<div style="height: 30px; text-align: center;vertical-align:middle;">
@@ -16,7 +16,9 @@
 	</div>
 
 	<hr>
-	<div id="description">View average timings for each step in BuildBot, or MozHarness.  Filter by pool, platfrom or suite.<br><br>
+	<div id="description">
+		View average <b>test</b> timings for each step in BuildBot, or MozHarness.  Filter by pool, platfrom or suite.<br><br>
+		ETL for the builds is not complete, so data will appear to be missing.  Would you like to see it?  Email me <a href="klahnakoski@mozilla.com">klahnakoski@mozilla.com</a>!
 	</div>
 	<hr>
 	<div id="testMessage"></div>
@@ -28,13 +30,26 @@
 	<div id="filters" class="menu"></div>
 </div>
 
-<div style="align:left;position:relative;float:left;width:800px;">
-	<h3 id="title">Buildbot Timings (past 2 days average)</h3>
+<div id="content" layout="right=page.right;top=page.top;left=sidebar.right;bottom=page.bottom" style="padding-left:20px;">
+	<h3 id="title" style="height:40px;">Buildbot Test Timings (1 week average)</h3>
 
-	<div id="details" style="overflow-y: scroll;position:absolute;left:10px;"></div>
-	<!--<div id="chart" class="chart" style="text-align:center;width:800px;height:300px;"></div>-->
+	<table class="grid">
+		<tr>
+			<td  style="width:410px;">
+				<div id="details" style="overflow-y: scroll;overflow-x: visible;"></div>
+			</td>
+			<td style="width:410px;">
+				<div id="count" class="chart" style="display: block;text-align:center;height:250px;width:400px;"></div>
+				<div id="average" class="chart" style="display: block;text-align:center;height:250px;width:400px;"></div>
+				<div id="percent" class="chart" style="display: block;text-align:center;height:250px;width:400px;"></div>
+			</td>
+
+		</tr>
+
+	</table>
 </div>
-<div class="footer">
+
+<div layout="bc=page.bc">
 	Source at <a href="https://github.com/mozilla/MoBuildbotTimings">https://github.com/mozilla/MoBuildbotTimings</a>
 </div>
 
@@ -42,15 +57,25 @@
 <script type="application/javascript">
 
 
-importScript(['modevlib/gui/GUI.js', 'js/util.js', 'modevlib/Dimension-Jobs.js' ], function(){
+importScript([
+	'modevlib/gui/GUI.js',
+	'modevlib/layouts/layout.js',
+	'js/util.js',
+	'modevlib/Dimension-Jobs.js'
+], function(){
+	layoutAll();
 
+	var TABLE = "jobs.action.timings";
 	var current_run = null;
-	var since = Date.now().subtract(Duration.WEEK).unix();
+	var timeFilter = {"gt": {"action.start_time": Date.now().subtract(Duration.WEEK).unix()}};
 
 	var __main = function*(this_run){
 
 		current_run = this_run;
 		$("#details").html("");
+		$("#count").html("");
+		$("#average").html("");
+		$("#percent").html("");
 
 		var pool = GUI.state.pool.makeFilter();
 		var platform = GUI.state.platform.makeFilter();
@@ -61,8 +86,8 @@ importScript(['modevlib/gui/GUI.js', 'js/util.js', 'modevlib/Dimension-Jobs.js' 
 			pool,
 			platform,
 			product,
-			suite,
-			{"gt": {"action.start_time": since}}
+			suite
+//			{"eq":{"action.type":"test"}}
 		]};
 
 
@@ -81,8 +106,11 @@ importScript(['modevlib/gui/GUI.js', 'js/util.js', 'modevlib/Dimension-Jobs.js' 
 						"value": ["builder.step", "harness.step"]
 					}
 				],
-				"from": "jobs.action.timings",
-				"where": focusFilter,
+				"from": TABLE,
+				"where": {"and":[
+					focusFilter,
+					timeFilter
+				]},
 				"limit": 1000,
 				"format": "list"
 			}));
@@ -127,9 +155,10 @@ importScript(['modevlib/gui/GUI.js', 'js/util.js', 'modevlib/Dimension-Jobs.js' 
 						{"aggregate":"count"}
 					],
 					"groupby": ["builder.step", "harness.step"],
-					"from": "jobs.action.timings",
+					"from": TABLE,
 					"where": {"and": [
 						focusFilter,
+						timeFilter,
 						{"or": steps.select("step").map(function(v){
 							if (v[1]){
 								return {"eq": {"builder.step": v[0], "harness.step": v[1]}};
@@ -146,6 +175,9 @@ importScript(['modevlib/gui/GUI.js', 'js/util.js', 'modevlib/Dimension-Jobs.js' 
 				}));
 				step_timings = result;
 			} catch (e) {
+				if (e.contains("Interrupted")){
+					return
+				}//endif
 				Log.error("Find steps", e);
 			} finally {
 				Log.actionDone(a);
@@ -182,13 +214,149 @@ importScript(['modevlib/gui/GUI.js', 'js/util.js', 'modevlib/Dimension-Jobs.js' 
 			yield (null);
 		});
 
+
+		var history_query = {
+			"select": [
+				{
+					"name": "run_tests",
+					"value": {"when": {"eq": {"harness.step": "run-tests"}}, "then": "harness.duration"},
+					"aggregate": "average",
+					"default": 0
+				},
+				{
+					"name": "other",
+					"value": {"when": {"not": {"eq": {"harness.step": "run-tests"}}}, "then": {"add": ["builder.duration", "harness.duration"]}},
+					"aggregate": "average",
+					"default": 0
+				}
+			],
+			"edges": [
+				{"name": "date", "value": "action.start_time", "allowNulls": false, "domain": {
+					"type": "time",
+					"min": GUI.state.sampleMin,
+					"max": GUI.state.sampleMax,
+					"interval": GUI.state.sampleInterval
+				}}
+			],
+			"from": TABLE,
+			"where": {"and": [
+				focusFilter,
+				{"gte": {"action.start_time": Date.newInstance(GUI.state.sampleMin).unix()}},
+				{"lt": {"action.start_time": Date.newInstance(GUI.state.sampleMax).unix()}},
+				{"or": steps.select("step").map(function(v){
+					if (v[1]) {
+						return {"eq": {"builder.step": v[0], "harness.step": v[1]}};
+					} else {
+						return {"and": [
+							{"eq": {"builder.step": v[0]}},
+							{"missing": "harness.step"}
+						]};
+					}//endif
+				})}
+			]},
+			"limit": 1000,
+			"format": "cube"
+		};
+
+
+
 		Thread.run(function*(){
 			//SHOW TIMES OVER PAST FEW WEEKS
+			var a = Log.action("pull history", true);
+			try {
+				var result = yield (search(history_query));
+				step_timings = result;
+			} catch (e) {
+				Log.error("Pull steps failed", e);
+			} finally {
+				Log.actionDone(a);
+			}//try
+
+
+			//REPLACE NULLS WITH ZERO (SHOULD BE DONE BY ACTIVE DATA)
+			Map.forall(result.data, function(k,v){
+				v = new Matrix({"data":v});
+				v.forall(function(vv, c){
+					if (vv==null){
+						v.set(c, 0);
+					}//endif
+				})
+			});
+
+			var pct_result = {};
+			pct_result.select = result.select.map(function(s){if (s.name!="count") return s;});
+			pct_result.edges = result.edges;
+			pct_result.data = {};
+			pct_result.data.other = result.data.run_tests.map(function(v, i){
+				if (result.data.run_tests[i] + result.data.other[i]>0) {
+					return result.data.other[i] / (result.data.run_tests[i] + result.data.other[i])
+				}else{
+					return 1;
+				}//endif
+			});
+			pct_result.data.run_tests = result.data.run_tests.map(function(v, i){
+				if (result.data.run_tests[i] + result.data.other[i]>0) {
+					return result.data.run_tests[i] / (result.data.run_tests[i] + result.data.other[i])
+				}else{
+					return 0;
+				}//endif
+			});
+
+			if (current_run==this_run){
+				aChart.show({
+					"id":"average",
+					"name": "Average Step Time",
+					"sheetDiv":"info",
+					"type":"line",
+					"stacked":true,
+					"cube":result,
+					xAxisSize: 50
+				});
+				aChart.show({
+					"id":"percent",
+					"name": "Percentage Step Time",
+					"sheetDiv":"info",
+					"type":"area",
+					"stacked":true,
+					"cube":pct_result,
+					xAxisSize: 50
+				});
+			}//endif
+
+
+
+
 
 
 		});
 
 
+		Thread.run(function*(){
+			history_query.select = [{"aggregate": "count"}];
+			history_query.where.and.append({"eq": {"harness.step": "run-tests"}});
+			var a = Log.action("pull count history", true);
+			try {
+				var result = yield (search(history_query));
+			} catch (e) {
+				Log.error("Pull counts failed", e);
+			} finally {
+				Log.actionDone(a);
+			}//try
+
+			aChart.replaceNulls(result);
+
+			if (current_run==this_run) {
+				aChart.show({
+					"id": "count",
+					"name": "Count",
+					"sheetDiv": "info",
+					"type": "line",
+					"stacked": false,
+					"cube": result,
+					xAxisSize: 50
+				});
+			}//endif
+		});
 		yield (null);
 	};
 

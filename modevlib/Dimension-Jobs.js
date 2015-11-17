@@ -7,14 +7,14 @@ importScript("Dimension.js");
 if (!Mozilla) var Mozilla = {"name": "Mozilla", "edges": []};
 
 (function(){
-	var pastWeek = {"gt": {"build.date": Date.today().subtract(Duration.WEEK).unix()}};
+	var pastWeek = {"gt": {"build.date": Date.today().subtract(Duration.MONTH).unix()}};
 
 	Dimension.addEdges(false, Mozilla, [
 		{"name": "Timings", "index": "jobs.action.timings", "edges": [
-			{"name": "Platform", "field": "build.platform", "type": "set", "esfilter": pastWeek, "limit":100},
-			{"name": "Product", "field": "build.product", "type": "set", "esfilter": pastWeek, "limit":100},
-			{"name": "Suite", "field": "run.suite", "type": "set", "esfilter": pastWeek, "limit":100},
-			{"name": "Pool", "field": "run.machine.pool", "type": "set", "esfilter": pastWeek, "limit":100}
+			{"name": "Platform", "field": "build.platform", "type": "set", "sample": pastWeek, "limit":100},
+			{"name": "Product", "field": "build.product", "type": "set", "sample": pastWeek, "limit":100},
+			{"name": "Suite", "field": "run.suite", "type": "set", "sample": pastWeek, "limit":100},
+			{"name": "Pool", "field": "run.machine.pool", "type": "set", "sample": pastWeek, "limit":100}
 		]}
 	]);
 

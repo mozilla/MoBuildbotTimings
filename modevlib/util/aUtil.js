@@ -15,24 +15,15 @@ var Map = {};
 // null IS A VALID VALUE INDICATING THE VALUE IS UNKNOWN
 ////////////////////////////////////////////////////////////////////////////////
 (function(){
-	function splitField(fieldname){
-		try {
-			return fieldname.replaceAll("\\.", "\b").split(".").map(function(v){
-				return v.replaceAll("\b", ".");
-			});
-		} catch (e) {
-			Log.error("Can not split field", e);
-		}//try
-	}//method
-
 	Map.newInstance = function(key, value){
 		var output = {};
 		output[key] = value;
 		return output;
 	};//method
 
-	//LIST OF [k, v] TUPLES EXPECTED
 	Map.zip = function(keys, values){
+		// LIST OF [k, v] TUPLES EXPECTED
+		// OR LIST OF keys AND LIST OF values
 		var output = {};
 
 		if (values === undefined) {
@@ -62,8 +53,8 @@ var Map = {};
 	};
 
 
-	//IF dest[k]==undefined THEN ASSIGN source[k]
 	Map.setDefault = function(dest){
+	//IF dest[k]==undefined THEN ASSIGN source[k]
 		for (var s = 1; s < arguments.length; s++) {
 			var source = arguments[s];
 			if (source === undefined) continue;
@@ -106,11 +97,13 @@ var Map = {};
 	// ASSUME THE DOTS (.) IN fieldName ARE SEPARATORS
 	// AND THE RESULTING LIST IS A PATH INTO THE STRUCTURE
 	// (ESCAPE "." WITH "\\.", IF REQUIRED)
-	Map.get = function(obj, fieldName){
+	Map.get = function(obj, path){
 		if (obj === undefined || obj == null) return obj;
-		var path = splitField(fieldName);
-		for (var i = 0; i < path.length - 1; i++) {
-			var step = path[i];
+		if (path==".") return obj;
+
+		var pathArray = splitField(path);
+		for (var i = 0; i < pathArray.length; i++) {
+			var step = pathArray[i];
 			if (step == "length") {
 				obj = eval("obj.length");
 			} else {
@@ -118,9 +111,28 @@ var Map = {};
 			}//endif
 			if (obj === undefined || obj == null) return undefined;
 		}//endif
-		return obj[path.last()];
+		return obj;
 	};//method
 
+	Map.set = function(obj, path, value){
+		if (obj === undefined || obj == null || path=="."){
+			Log.error("must be given an object ad field");
+		}//endif
+
+		var pathArray = splitField(path);
+		var o = obj;
+		for (var i = 0; i < pathArray.length-1; i++) {
+			var step = pathArray[i];
+			var val = o[step];
+			if (val===undefined || val==null){
+				val={};
+				o[step]=val;
+			}//endif
+			o=val;
+		}//endif
+		o[pathArray[i]]=value;
+		return obj;
+	};//method
 
 	Map.codomain = function(map){
 		var output = [];
@@ -217,7 +229,7 @@ var Map = {};
 			}//endif
 		}//for
 		return output;
-	}//function
+	};//function
 
 
 	Map.getValues = function getValues(map){
@@ -235,6 +247,12 @@ var Map = {};
 
 	Map.getKeys = Object.keys;
 
+
+	Map.isObject = function (val) {
+	    if (val === null) { return false;}
+	    return ( (typeof val === 'function') || (typeof val === 'object') );
+	};
+	Map.isMap = Map.isObject;
 
 
 })();
@@ -290,6 +308,9 @@ Util.returnNull = function(__row){
 
 
 //POOR IMPLEMENTATION
+/*
+ * @return {string} A Random GUID
+ */
 Util.GUID = function(){
 	return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c){
 		var r = aMath.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
@@ -298,4 +319,34 @@ Util.GUID = function(){
 };//method
 
 
+function splitField(fieldname){
+	try {
+		return fieldname.replaceAll("\\.", "\b").split(".").map(function(v){
+			return v.replaceAll("\b", ".");
+		});
+	} catch (e) {
+		Log.error("Can not split field", e);
+	}//try
+}//method
 
+
+
+deepCopy = function(value) {
+    if (typeof value !== "object" || !value)
+        return value;
+
+	var copy;
+	var k;
+    if (Array.isArray(value)){
+        copy = [];
+        for (k=value.length;k--;) copy[k] = deepCopy(value[k]);
+        return copy;
+    }//endif
+
+    var cons = value.constructor;
+    if (cons === RegExp || cons === Date) return value;
+
+    copy = cons();
+	Map.forall(value, function(k, v){copy[k]=deepCopy(v);});
+	return copy;
+};

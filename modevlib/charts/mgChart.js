@@ -37,6 +37,7 @@ importScript("../../lib/jquery.js");
 	 */
 	aChart.showScatter = function(params){
 		Map.expecting(params, ["target", "data"]);
+		var styles = Map.clone(STYLES);
 
 		var data;
 		if (params.data instanceof Array) {
@@ -53,8 +54,6 @@ importScript("../../lib/jquery.js");
 			////////////////////////////////////////////////////////////////////////////
 			var xaxis = chartCube.select[0];
 			var yaxis = chartCube.select[1];
-
-			var styles = Map.clone(STYLES);
 
 			if (chartCube.edges.length >= 1) {
 				chartCube.edges[0].domain.partitions.forall(function(p, i){
@@ -93,8 +92,8 @@ importScript("../../lib/jquery.js");
 		var height = coalesce(Map.get(params, "style.height"), $('#' + params.target).height(), 400);
 		var width = coalesce(Map.get(params, "style.width"), $('#' + params.target).width(), 300);
 
-		var x_accessor = coalesce(Map.get(params, "axis.x.value"), xaxis.name);
-		var y_accessor = coalesce(Map.get(params, "axis.y.value"), yaxis.name);
+		var x_accessor = coalesce(Map.get(params, "axis.x.value"), Map.get(xaxis, "name"));
+		var y_accessor = coalesce(Map.get(params, "axis.y.value"), Map.get(yaxis, "name"));
 
 
 		//POPUP FORMATTING
@@ -102,7 +101,7 @@ importScript("../../lib/jquery.js");
 		var mouseover;
 		var y_rollover_format;
 		var x_rollover_format;
-		if (format && isString()) {
+		if (isString(format)) {
 			mouseover = function(d, i){
 				d3
 				.select('#' + params.target + ' svg .mg-active-datapoint')

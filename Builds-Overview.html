@@ -27,7 +27,7 @@
 	<div>Configuration</div>
 </div>
 <div class="content" layout="top=page.top;left=sidebar_name.right;" style="padding: 10px 10px 50px 10px;">
-	<h1 id="title">Build Times</h1>
+	<h1 id="title">Firefox Build Times</h1>
 	<span id="status" style="height:30px">Page Loading...</span><span class="loading"><img src="images/spinner.gif" alt=""></span>
 
 	<div id="chart_area">Please Wait</div>
@@ -69,7 +69,7 @@ importScript([
 
 	var __createChart = function*(){
 		var beginPastWeek = Date.today().subtract(Duration.WEEK);
-		var beginPastMonth = Date.today().subtract(Duration.MONTH);
+		var beginPastMonth = Date.today().subtract(Duration.MONTH.multiply(2));
 		var totalsFilter = {"and":[
 			{"eq": {"action.type": "build"}},
 			{"eq": {"build.product": "firefox"}}
@@ -132,29 +132,6 @@ importScript([
 			var html = row_template.replace({"TITLE": type.name, "ROWNUM":""+p});
 			rows.append(html);
 
-			aChart.show({
-				"id":"chart"+p,
-				"type":"bar",
-				"stacked":false,
-				"width": 200,
-				"height":200,
-				"cube": {
-					"select": averages.select,
-					"data": averages.data.average[index].map(function(v){return coalesce(v, 0);}),
-					"edges": averages.edges.slice(1)
-				},
-				"legendPosition":"right",
-				"legendSize":0,
-				xAxisSize: 50,
-				extensionPoints: {
-					line_lineWidth: 2
-				},
-				"clickAction":function(channel, _benchmark, value){
-					//DO NOTHING
-					return;
-				}
-			});
-
 			Thread.run(function*(){
 				var queryTimes = {
 					"from": "jobs",
@@ -208,6 +185,37 @@ importScript([
 					Log.actionDone(a);
 				}//try
 
+				var chartMax = 1;
+				new Matrix({data:timeSeries.data.average}).forall(function(v){
+					if (v>chartMax) chartMax=v;
+				});
+				chartMax = aMath.niceCeiling(chartMax);
+
+
+
+				aChart.show({
+					"id":"chart"+p,
+					"type":"bar",
+					"stacked":false,
+					"width": 200,
+					"height":200,
+					"cube": {
+						"select": averages.select,
+						"data": averages.data.average[index].map(function(v){return coalesce(v, 0);}),
+						"edges": averages.edges.slice(1)
+					},
+					orthoAxisFixedMax: chartMax,
+					"legendPosition":"right",
+					"legendSize":0,
+					xAxisSize: 50,
+					extensionPoints: {
+						line_lineWidth: 2
+					},
+					"clickAction":function(channel, _benchmark, value){
+						//DO NOTHING
+						return;
+					}
+				});
 
 				aChart.show({
 					"id":"chartseries"+p,
@@ -216,6 +224,7 @@ importScript([
 					"width": 800,
 					"height":200,
 					"cube": timeSeries,
+					orthoAxisFixedMax: chartMax,
 					"legendPosition":"left",
 					"legendSize":100,
 					xAxisSize: 50,
@@ -227,6 +236,8 @@ importScript([
 						return;
 					}
 				});
+
+				dynamicLayout();
 
 				yield (null);
 			});

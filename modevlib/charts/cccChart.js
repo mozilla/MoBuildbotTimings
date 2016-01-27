@@ -405,11 +405,17 @@ aChart.showPie=function(params){
 
 
 aChart.show=function(params){
-	Map.expecting(params, ["id", "cube"]);
+	Map.expecting(params, ["id"]);
 	var divName=params.id;
 
 	var chartCube=params.cube;
-	var cube = coalesce(chartCube.cube, chartCube.data);
+	var cube = coalesce(Map.get(params, "cube.cube"), Map.get(params, "cube.data"), params.data);
+	if (!cube) Log.error("Expecting `cube` parameter, or `data` parameter");
+
+	if (!chartCube){
+		Map.expecting(params["data", "axis.x.value", "series.type"])
+	}
+	//EXPECTING cube TO BE AN OBJECT WITH cube[chartCube.select] BEING AN ARRAY
 
 	if (!(cube instanceof Array)){
 		//THE ActiveData CUBE
@@ -486,12 +492,11 @@ aChart.show=function(params){
 			return v.name;
 		});
 	}else if (chartCube.edges.length==2){
-		if (chartCube.select instanceof Array){
-			if (chartCube.select.length>1) {
+		if (chartCube.select instanceof Array) {
+			if (chartCube.select.length > 1) {
 				Log.error("Can not chart when select clause is an array");
-			}else{
+			} else {
 				chartCube.select = chartCube.select[0];
-				cube = new Matrix({"data":cube[chartCube.select.name]})
 			}//endif
 		}//endif
 		categoryAxis=chartCube.edges[0];
@@ -755,6 +760,7 @@ aChart.show=function(params){
 	}//endif
 
 
+	return chart;
 };
 
 
@@ -779,10 +785,10 @@ function fixAction(chartParams, actionName){
 				c = c.addTimezone();
 			}//endif
 
-			return action(s, c, v, elem, series.dataIndex);
+			return action.call(this, s, c, v, elem, series.dataIndex);
 		} else{
 			//CCC VERSION 1
-			return action(series, x, d, elem);
+			return action.call(this, series, x, d, elem);
 		}//endif
 	};//method
 }

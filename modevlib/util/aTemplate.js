@@ -63,7 +63,9 @@ var Template = function Template(template){
 	FUNC.format = function(value, format){
 		return Date.newInstance(value).format(format);
 	};
-	FUNC.round = aMath.round;
+	FUNC.round = function(value, digits){
+		return aMath.round(value, {"digits":digits});
+	};
 
 	function _expand(template, namespaces){
 		if (template instanceof Array) {

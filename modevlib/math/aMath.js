@@ -147,7 +147,32 @@ aMath = {};
 	};//method
 
 
-	aMath.floor = Math.floor;
+	aMath.floor = function(value, mod){
+		if (value==null){
+			return null;
+		}else if (mod === undefined){
+			mod = 1;
+		}else if (mod==null){
+			return null;
+		}//endif
+		return value - (value % mod);
+	};//function
+
+	aMath.mod = function(value, mod){
+		if (value==null){
+			return null;
+		}else if (mod === undefined){
+			mod = 1;
+		}else if (mod==null){
+			return null;
+		}//endif
+		return value % mod;
+	};//function
+
+
+
+
+	//FOR EVENTUAL REPLACEMENT WITH null-SAFE VERSIONS
 	aMath.ceil = Math.ceil;
 	aMath.ceiling = Math.ceil;
 	aMath.log = Math.log;

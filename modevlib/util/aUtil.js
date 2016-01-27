@@ -210,7 +210,7 @@ var Map = {};
 			var val = map[key];
 			if (val !== undefined) {
 				var result = func(key, val, i);
-				if (result !== undefined) output.push(result);
+				if (result !== undefined) output[i]=result;
 			}//endif
 		}//for
 		return output;

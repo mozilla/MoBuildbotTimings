@@ -1,0 +1,171 @@
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<HTML>
+<HEAD>
+	<script type="text/javascript" src="modevlib/imports/import.js"></script>
+    <link type="text/css" rel="stylesheet" href="css/menu.css"/>
+</HEAD>
+<BODY>
+
+
+<div id="sidebar" layout="tl=window.tl;bottom=footer.bottom;" style="width:0;overflow:hidden;">
+	<div id="description" style="padding-left:10px;">
+		<h3>About</h3>
+		An overview of current build times.  Click on a chart of a timeseries view.
+	</div>
+	<hr>
+	<div id="last-updated" style="text-align: center;width:300px;"></div>
+	<hr>
+	<div id="filters" style="width:300px;" class="menu">
+	</div>
+	<div id="parameters">
+	</div>
+</div>
+<div id="sidebar_name" class="sidebar_name" layout="top=window.top;bottom=footer.top;left=sidebar.right;">
+	<div>Configuration</div>
+</div>
+<div class="content" layout="top=page.top;left=sidebar_name.right;right=window.right;" style="padding: 10px 10px 50px 10px;">
+	<h1 id="title">Build Times</h1>
+	<span id="status" style="height:30px">Page Loading...</span><span class="loading"><img src="images/spinner.gif" alt=""></span>
+
+	<div id="chart_area" class="chart" style="width:1000px;height:400px;">Please Wait</div>
+</div>
+<div id="footer" style="height:50px;text-align: center;padding: 5px 0 5px 0;background-color: #fff;z-index: 12;" layout="bl=window.bl;br=window.br;">
+	Source at <a href="https://github.com/mozilla/MoBuildbotTimings">https://github.com/mozilla/MoBuildbotTimings</a><br>
+	Wiki <a href="https://wiki.mozilla.org/Auto-tools/Projects/DevelopmentMetrics">https://wiki.mozilla.org/Auto-tools/Projects/DevelopmentMetrics</a>
+</div>
+
+
+
+<script type="application/javascript">
+
+
+importScript([
+	'modevlib/main.js',
+	'js/util.js',
+	'modevlib/layouts/layout.js',
+	'modevlib/charts/mgChart.js',
+	'modevlib/Dimension-Builds.js'
+], function(){
+	layoutAll();
+
+	var thread;
+	var createChart = function(){
+		if (thread !== undefined)
+			thread.kill();
+		thread = Thread.run(__createChart());
+	};
+
+	var __createChart = function*(){
+		var startOfWeek = Date.today().subtract(Duration.WEEK);
+		var startTime = Date.today().subtract(Duration.WEEK);
+		var platform = "win64";
+
+		var totalsFilter = {"and":[
+			{"eq": {
+				"action.type": "build",
+				"build.product": "firefox",
+				"build.platform": platform,
+			}},
+			{"missing": "build.type"}
+		]};
+
+		//SUMMARY OF BUILD TIMES SINCE minDate
+		var query = {
+			"from": "jobs",
+			"select": {"aggregate":"count"},
+			"where": {
+				"and": [
+					totalsFilter,
+					{"gt": {"action.start_time": startTime.unix()}}
+				]
+			},
+			"limit": 1000
+		};
+		var a=Log.action("Get summary", true);
+		try {
+			var count = yield (search(query));
+		}catch (e){
+			Log.error("problem with call to ACtiveData", e)
+		}finally{
+			Log.actionDone(a);
+		}//try
+
+		a = Log.action("Loading "+count.data.count+" builds", true);
+		try{
+			var details = yield (search({
+				"from":"jobs",
+				"select":[
+					{"name":"start", "value":"action.start_time"},
+					{"name":"duration", "value":{"div":{"action.duration": 60}}},
+					{"name":"revision", "value":"build.revision"}
+				],
+				"where": {
+					"and": [
+						totalsFilter,
+						{"gt": {"action.start_time": startTime.unix()}}
+					]
+				},
+				"format": "list",
+				"limit": 100000
+			}))
+		}finally{
+			Log.actionDone(a);
+		}//try
+
+		details.data.forall(function(d){
+			d.start=Date.newInstance(d.start);
+		});
+
+
+		$("#chart_area").html("");
+		aChart.showScatter({
+			"target": "chart_area",
+			"hover":{"format":"revision {{revision|left(12)}}, {{duration|round(3)}}minutes"},
+			"data": details.data,
+			"axis": {
+				"x": {
+					"value":"start",
+					"format":"{{.|format('NNN dd, HH:mm')}}",
+					"size": 50
+				},
+				"y": {
+					"value":"duration"
+				}
+			},
+			"click":function(d){
+
+			}
+		});
+	};//function
+
+	Thread.showWorking = function(numThread){
+		var l = $(".loading");
+		l.show();
+	};//function
+
+	Thread.hideWorking = function(){
+		var l = $(".loading");
+		l.hide();
+	};//function
+
+	$(document).ready(function(){
+		GUI.setup(createChart, [
+			],
+			[
+			],
+			"perfy",
+			false
+		);
+	});
+
+});
+
+</script>
+
+
+</BODY>
+</HTML>
+

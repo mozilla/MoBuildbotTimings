@@ -55,7 +55,7 @@
 			}
 		},
 		"legend": {
-			"description": "more configuration for ledgend",
+			"description": "more configuration for legend",
 			"type": "object",
 			"properties": {
 				"label": {

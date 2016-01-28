@@ -9,7 +9,7 @@ importScript("../../lib/jquery.js");
 
 
 (function(){
-	var DEBUG = true;
+	var DEBUG = false;
 
 
 	window.aChart = window.aChart || {};
@@ -165,7 +165,8 @@ importScript("../../lib/jquery.js");
 			}),
 			color_type: 'category',
 			x_rug: Map.get(params, "axis.x.rug"),
-			mouseover: mouseover
+			mouseover: mouseover,
+			click: params.click
 		};
 		MG.data_graphic(chartParams);
 

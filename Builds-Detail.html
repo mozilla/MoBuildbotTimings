@@ -60,7 +60,7 @@ importScript([
 
 	var __createChart = function*(){
 		var startOfWeek = Date.today().subtract(Duration.WEEK);
-		var startTime = Date.today().subtract(Duration.WEEK);
+		var startTime = Date.today().subtract(Duration.MONTH.multiply(2));
 		var platform = "win64";
 
 		var totalsFilter = {"and":[
@@ -68,6 +68,7 @@ importScript([
 				"action.type": "build",
 				"build.product": "firefox",
 				"build.platform": platform,
+				"action.buildbot_status":"success"
 			}},
 			{"missing": "build.type"}
 		]};
@@ -100,6 +101,7 @@ importScript([
 				"select":[
 					{"name":"start", "value":"action.start_time"},
 					{"name":"duration", "value":{"div":{"action.duration": 60}}},
+					{"name":"branch", "value":"build.branch"},
 					{"name":"revision", "value":"build.revision"}
 				],
 				"where": {
@@ -123,7 +125,7 @@ importScript([
 		$("#chart_area").html("");
 		aChart.showScatter({
 			"target": "chart_area",
-			"hover":{"format":"revision {{revision|left(12)}}, {{duration|round(3)}}minutes"},
+			"hover":{"format":"branch {{branch}}, revision {{revision|left(12)}}, {{duration|round(3)}}minutes"},
 			"data": details.data,
 			"axis": {
 				"x": {
@@ -132,11 +134,12 @@ importScript([
 					"size": 50
 				},
 				"y": {
-					"value":"duration"
+					"value":"duration",
+					"range":{"max":aMath.roundNice()}
 				}
 			},
 			"click":function(d){
-
+				window.open(new Template("https://treeherder.mozilla.org/#/jobs?repo={{branch}}&revision={{revision}}").replace(d));
 			}
 		});
 	};//function

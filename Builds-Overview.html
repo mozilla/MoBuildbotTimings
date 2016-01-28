@@ -71,8 +71,12 @@ importScript([
 		var beginPastWeek = Date.today().subtract(Duration.WEEK);
 		var beginPastMonth = Date.today().subtract(Duration.MONTH.multiply(2));
 		var totalsFilter = {"and":[
-			{"eq": {"action.type": "build"}},
-			{"eq": {"build.product": "firefox"}}
+			{"eq": {
+				"action.type": "build",
+				"build.product": "firefox",
+				"action.buildbot_status":"success"
+			}},
+			{"not":{"terms":{"build.branch":["mozilla-aurora", "mozilla-beta"]}}}
 		]};
 
 		//SUMMARY OF BUILD TIMES SINCE minDate

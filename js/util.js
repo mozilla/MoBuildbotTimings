@@ -21,6 +21,9 @@ importScript("../modevlib/qb/Qb.js");
 var search = function*(query){
 
 	var source = window.Settings.indexes[query.from];
+	if (!source){
+		Log.error("{{from}} not found in the lookup table", {"from":query.from})
+	}//endif
 	query.from=source.table;
 
 	var output = yield (Rest.post({

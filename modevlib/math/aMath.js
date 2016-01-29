@@ -62,6 +62,14 @@ aMath = {};
 		return Math.round(value * d) / d;
 	};//method
 
+	aMath.roundMetric=function(value, rounding){
+		var order = aMath.floor(Math.log10(value)/3);
+		var prefix = aMath.round(value/Math.pow(10, order*3), rounding);
+		var units = ["nano", "micro", "milli", "", "kilo", "mega", "giga", "tera"][order+3];
+
+		return prefix+units;
+	};//method
+
 	function SUM(values){
 		var sum = null;
 		for (var i = 0; i < values.length; i++) {
@@ -170,11 +178,27 @@ aMath = {};
 	};//function
 
 
+	aMath.ceiling = function(value, rounding){
+		if (value==null) {
+			return null;
+		}else if (rounding === undefined){
+			return Math.ceil(value);
+		}else if (rounding==null){
+			return null;
+		}else if (value == 0) {
+			return 0.0;
+		} else if (rounding.digits !== undefined) {
+			d = Math.pow(10, rounding.digits - aMath.ceiling(aMath.log10(value)));
+		} else {
+			d = Math.pow(10, rounding);
+		}//endif
+		return Math.ceil(value * d) / d;
+	};//method
+	aMath.ceil = aMath.ceiling;
+
 
 
 	//FOR EVENTUAL REPLACEMENT WITH null-SAFE VERSIONS
-	aMath.ceil = Math.ceil;
-	aMath.ceiling = Math.ceil;
 	aMath.log = Math.log;
 	aMath.random = Math.random;
 

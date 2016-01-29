@@ -998,7 +998,7 @@ Qb.domain.set = function(column, sourceColumns){
 	if (typeof(d.partitions[0])=="string"){
 		d.partitions.forall(function(part, i){
 			if (typeof(part)!="string") Log.error("Partition list can not be heterogeneous");
-			part={"name":part, "value":part};
+			part = {"name": part, "value": part, "dataIndex": i};
 			d.partitions[i]=part;
 		});
 		d.value="name";

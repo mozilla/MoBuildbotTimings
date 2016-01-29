@@ -41,3 +41,25 @@ var search = function*(query){
 };
 
 Settings.host_types["ActiveData"]=search;
+
+
+
+function sidebarSlider(){
+	var WIDTH = "340px";
+
+	$("body").css("display", "block");
+
+	$('.sidebar_name').click(function(){
+		var self = $(this);
+		if (self.hasClass("selected")) {
+			self.removeClass("selected");
+			$("#sidebar").css({"width": "0px"});
+			dynamicLayout();
+		} else {
+			self.addClass("selected");
+			$("#sidebar").css({"width": WIDTH});
+			dynamicLayout();
+		}//endif
+	});
+}
+

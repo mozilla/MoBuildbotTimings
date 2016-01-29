@@ -27,10 +27,17 @@
 	<div>Configuration</div>
 </div>
 <div class="content" layout="top=page.top;left=sidebar_name.right;right=window.right;" style="padding: 10px 10px 50px 10px;">
-	<h1 id="title">Build Times</h1>
-	<span id="status" style="height:30px">Page Loading...</span><span class="loading"><img src="images/spinner.gif" alt=""></span>
-
-	<div id="chart_area" class="chart" style="width:1000px;height:400px;">Please Wait</div>
+	<div id="header">
+		<h1 id="title" style="display: inline-block;">Firefox win64 Build Times</h1>
+		<span id="status" style="height:30px">Page Loading...</span>
+		<span class="loading"><img src="images/spinner.gif" alt=""></span>
+	</div>
+	<div id="breakdown">
+		<div id="chart_area" class="chart" style="width:800px;height:400px;">Please Wait</div>
+		<div id="details" layout="top=..top;left=chart_area.right;bottom=footer.top;">
+		</div>
+		<div id="raw_activedata" class="code" style="height:400px;border: 1px solid black; overflow: scroll;" layout="top=..top;left=details.right;right=window.right;"></div>
+	</div>
 </div>
 <div id="footer" style="height:50px;text-align: center;padding: 5px 0 5px 0;background-color: #fff;z-index: 12;" layout="bl=window.bl;br=window.br;">
 	Source at <a href="https://github.com/mozilla/MoBuildbotTimings">https://github.com/mozilla/MoBuildbotTimings</a><br>
@@ -40,8 +47,6 @@
 
 
 <script type="application/javascript">
-
-
 importScript([
 	'modevlib/main.js',
 	'js/util.js',
@@ -50,6 +55,21 @@ importScript([
 	'modevlib/Dimension-Builds.js'
 ], function(){
 	layoutAll();
+	sidebarSlider();
+
+	var DETAIL = new Template([
+		'<div style="border:1px solid gray">'+
+		'<table id="properties">',
+		'<tr><td colspan="2"><b>{{status|upper}}</b></td></tr>',
+		'<tr><td style="text-align: right;"><b>Branch :</b></td><td style="text-align: left;padding-left:1em;">{{branch}}</td></tr>',
+		'<tr><td style="text-align: right;"><b>Revision :</b></td><td class="code" style="text-align: left;padding-left:1em;">{{revision|left(12)}}</td></tr>',
+		'<tr><td style="text-align: right;"><b>Start Time :</b></td><td style="text-align: left;padding-left:1em;">{{start|format("MMM dd, HH:mm")}}</td></tr>',
+		'<tr><td style="text-align: right;"><b>Duration :</b></td><td style="text-align: left;padding-left:1em;">{{duration|round(3)}} minutes</td></tr>',
+		'<tr><td colspan="2"><hr></td></tr>',
+		'<tr><td colspan="2" style="text-align: right"><a class="button" href="#" onClick="window.open(\'https://treeherder.mozilla.org/#/jobs?repo={{branch}}&revision={{revision}}\')">Go to Treeherder</a></td></tr>',
+		'</table>',
+		'</div>'
+	]);
 
 	var thread;
 	var createChart = function(){
@@ -60,15 +80,15 @@ importScript([
 
 	var __createChart = function*(){
 		var startOfWeek = Date.today().subtract(Duration.WEEK);
-		var startTime = Date.today().subtract(Duration.MONTH.multiply(2));
+		var startTime = Date.today().subtract(Duration.WEEK);
+//		var startTime = Date.today().subtract(Duration.MONTH.multiply(2));
 		var platform = "win64";
 
 		var totalsFilter = {"and":[
 			{"eq": {
 				"action.type": "build",
 				"build.product": "firefox",
-				"build.platform": platform,
-				"action.buildbot_status":"success"
+				"build.platform": platform
 			}},
 			{"missing": "build.type"}
 		]};
@@ -100,6 +120,7 @@ importScript([
 				"from":"jobs",
 				"select":[
 					{"name":"start", "value":"action.start_time"},
+					{"name":"status", "value":"action.buildbot_status"},
 					{"name":"duration", "value":{"div":{"action.duration": 60}}},
 					{"name":"branch", "value":"build.branch"},
 					{"name":"revision", "value":"build.revision"}
@@ -125,8 +146,19 @@ importScript([
 		$("#chart_area").html("");
 		aChart.showScatter({
 			"target": "chart_area",
-			"hover":{"format":"branch {{branch}}, revision {{revision|left(12)}}, {{duration|round(3)}}minutes"},
+			"hover":{"format": "{{duration|round(3)}}minutes"},
 			"data": details.data,
+			"series":[
+				{
+					"name": "Branch",
+					"value": {
+						"when": {"eq": {"status": "success"}},
+						"then": "branch",
+						"else": "success"
+					},
+					"axis":"color"
+				}
+			],
 			"axis": {
 				"x": {
 					"value":"start",
@@ -135,11 +167,40 @@ importScript([
 				},
 				"y": {
 					"value":"duration",
-					"range":{"max":aMath.roundNice()}
+					"range":{
+						"max": aChart.maxNice(details.data.select("duration"))
+					}
+				},
+				"color": {
+					"missing": {"style": {"color": "red"}},
+					"domain": {
+						"type": "set",
+						"partitions": Array.union(details.data.select("branch"))
+					}
 				}
 			},
 			"click":function(d){
-				window.open(new Template("https://treeherder.mozilla.org/#/jobs?repo={{branch}}&revision={{revision}}").replace(d));
+
+				$('#details').html(DETAIL.expand(d));
+				layoutAll();
+
+				Thread.run(function*(){
+					$("#raw_activedata").html("");
+					var details = yield (search({
+						"from":"jobs",
+						"where": {"and": [
+							{"eq": (d.revision ? {"build.revision": d.revision} : {"action.start_time": d.start.unix()})},
+							{"eq":{
+								"build.branch": d.branch
+							}},
+							totalsFilter
+						]},
+						"format": "list",
+						"limit": 100
+					}));
+					$("#raw_activedata").html(convert.String2HTML(convert.value2json(Array.unwrap(details.data))));
+				});
+
 			}
 		});
 	};//function

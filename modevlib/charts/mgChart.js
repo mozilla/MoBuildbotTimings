@@ -18,7 +18,7 @@ importScript("../qb/Expressions.js");
 	////////////////////////////////////////////////////////////////////////////
 	// STYLES
 	////////////////////////////////////////////////////////////////////////////
-	var STYLES = [
+	aChart.STYLES = [
 		{"color": "#1f77b4"},
 		{"color": "#ff7f0e"},
 		{"color": "#2ca02c"},
@@ -37,7 +37,7 @@ importScript("../qb/Expressions.js");
 	 */
 	aChart.showScatter = function(params){
 		Map.expecting(params, ["target", "data"]);
-		var styles = Map.clone(STYLES);
+		var styles = Map.clone(aChart.STYLES);
 
 		var data;
 		if (isArray(params.data) || Map.get(params, "data.meta.format")=="list") {

@@ -226,7 +226,7 @@ importScript([
 
 
 //			var xScale = scale.domain(action.start_time, action.end_time).range(0, width);
-			var xScale = d3.scale.linear().domain([action.start_time, action.end_time]).range([20, width-20]);
+			var xScale = d3.scale.linear().domain([action.start_time, action.end_time]).range([20, width-40]);
 
 			function start(d){
 				return xScale(coalesce(Map.get(d, "harness.start_time"), Map.get(d, "builder.start_time")));
@@ -262,12 +262,28 @@ importScript([
 
 			var e = svg.selectAll("rect").data(timings).enter();
 
-			e.append("rect")
+			e.append("rect") //SHOW BAR
 				.x(start)
 				.y(yLine)
 				.width(duration)
 				.height(HEIGHT)
 				.fill(function(d, i){return colors[i%colors.length];})
+				.on("mouseover", function(){
+					return tip.style({
+						"top": d3.event.pageX+"px",
+						"left": d3.event.pageY+"px",
+						"visibility": "visible"
+					});
+				})
+				.on("mousemove", function(){
+					return tip.style({
+						"top": d3.event.pageX+"px",
+						"left": d3.event.pageY+"px"
+					});
+				})
+				.on("mouseout", function(){
+					return tip.style("visibility", "hidden");
+				})
 			;
 			e.append("rect")  //SHOW TIME MARKERS
 				.x(function(d){return start(d)-0.5;})
@@ -275,9 +291,8 @@ importScript([
 				.width(1)
 				.height(HEIGHT+10)
 				.fill("black")
-				.hover()
 			;
-			e.append("svg")  //SHOW START TIMES FOR EACH STEP
+			e.append("svg")  //SHOW NAME OF EACH STEP (CLIP TO svg)
 				.x(function(d){return start(d)+BORDER})
 				.y(function(d){return yLine(d)+BORDER})
 				.width(function(d){
@@ -305,15 +320,27 @@ importScript([
 				)
 				.append("text")
 				.text(function(d){
-//					if (duration(d)< 20 || level(d)==0) return "";
+					if (duration(d)< 20 || level(d)==0) return "";
 					var s = coalesce(Map.get(d, "harness.start_time"), Map.get(d, "builder.start_time"));
-					var text = Duration.newInstance(1000*(s-action.start_time)).format("HH:mm:ss");
-					return text;
+					return Duration.newInstance(1000*(s-action.start_time)).format("HH:mm:ss");
 				})
 				.y(HEIGHT - (BORDER*3))
-				.style('fill', 'black')
+				.fill('black')
 			;
 
+			(function(d){
+				svg.append("g")  //SHOW end_time
+					.translate(5, -15)
+					.rotate(45)
+					.translate(end(d) + BORDER, yLine(d) + HEIGHT + BORDER)
+					.append("text")
+					.text(Duration.newInstance(1000*(action.end_time-action.start_time)).format("HH:mm:ss"))
+					.y(HEIGHT - (BORDER*3))
+					.fill('black')
+				;
+
+
+			})(timings.last());
 
 
 		});
@@ -322,6 +349,16 @@ importScript([
 
 
 	}
+
+
+	var tip = d3.select("body").append("div").attr("id", "tip").style({
+		"position": "absolute",
+		"visibility": "hidden",
+		"background-color":"black",
+		"font-color": "white",
+		"font-weight": "bold"
+	}).html("this is a test");
+
 
 
 	var proto = d3.selection.prototype;

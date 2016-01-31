@@ -125,7 +125,7 @@ importScript("../qb/Expressions.js");
 			mouseover = function(d, i){
 				d3
 				.select('#' + params.target + ' svg .mg-active-datapoint')
-				.text(new Template(format).expand(d.point));
+				.text(new Template(format).expand(d));
 			};
 		}else if (format) {
 			if (!format.x) format.x="{{.}}";
@@ -143,13 +143,48 @@ importScript("../qb/Expressions.js");
 			})(new Template(format.y));
 
 			mouseover = function(d, i){
-				var point = d.point;
+				var point = d;
 				var text = x_rollover_format(Map.get(point, x_accessor))+" "+y_rollover_format(Map.get(point, y_accessor));
 				d3.select('#' + params.target + ' svg .mg-active-datapoint').text(text);
 			};
 		}else{
 			//AUTO FORMAT
 		}//endif
+
+		//CHAIN mouseover WITH SOME HOVER STYLE
+		(function(mouseoverOld){
+			mouseover = function(d, i){
+
+				chartParams.hoverLayer.append("circle")
+						.cx(chartParams.scalefns.xf(d))
+						.cy(chartParams.scalefns.yf(d))
+						.attr("r", 7)
+						.attr("fill", "none")
+						.attr("stroke", "gray")
+						.attr("stroke-width", 3)
+				;
+				mouseoverOld(d, i);
+
+			};
+		})(mouseover);
+
+		//CHAIN click TO HIGHLIGHT POINT
+		(function(clickOld){
+			params.click = function(d, i){
+				chartParams.selectLayer.html("");
+				chartParams.selectLayer.append("circle")
+						.cx(chartParams.scalefns.xf(d))
+						.cy(chartParams.scalefns.yf(d))
+						.attr("r", 7)
+						.attr("fill", "none")
+						.attr("stroke", "red")
+						.attr("stroke-width", 3)
+				;
+				clickOld(d, i);
+			};
+		})(params.click);
+
+
 
 		//X-AXIS FORMAT
 		var xax_format=Map.get(params, "axis.x.format");

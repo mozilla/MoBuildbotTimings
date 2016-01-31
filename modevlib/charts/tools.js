@@ -8,7 +8,7 @@ importScript("../../lib/d3/d3.js");
 
 	//SOME ATTRIBUTES THAT CAN BE FUNCTIONS BY SAME NAME
 	var proto = d3.selection.prototype;
-	["x", "y", "width", "height"].forall(function(name){
+	["cx", "cy", "x", "y", "width", "height"].forall(function(name){
 		proto[name]=function(){
 			return proto.attr.apply(this, [name].appendArray(arguments));
 		}

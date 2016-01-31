@@ -79,6 +79,8 @@ importScript([
 	]);
 
 	var thread;
+	var detailThread;
+
 	var createChart = function(){
 		if (thread !== undefined)
 			thread.kill();
@@ -194,11 +196,10 @@ importScript([
 	};//function
 
 	function clickDetails(d, totalsFilter){
-
 		$('#details').html(DETAIL.expand(d));
 		layoutAll();
 
-		Thread.run(function*(){
+		detailThread = Thread.run(function*(){
 			$("#raw_activedata").html("");
 			$("#timeline").html("");
 
@@ -224,15 +225,11 @@ importScript([
 			var timings = Qb.sort(action.timings, "order");
 			action.timings = timings;
 
-
-
-			$("#raw_activedata").html(RECORD.expand({"json":convert.String2HTML(convert.value2json(Array.unwrap(details.data)))}));
-			showTimeline(action, timings);
+			if (Thread.currentThread===detailThread) {
+				$("#raw_activedata").html(RECORD.expand({"json": convert.String2HTML(convert.value2json(Array.unwrap(details.data)))}));
+				showTimeline(action, timings);
+			}//endif
 		});
-
-
-
-
 	}
 
 

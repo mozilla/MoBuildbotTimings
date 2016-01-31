@@ -64,7 +64,7 @@ function sidebarSlider(){
 
 
 function showTimeline(action, timings){
-	var width = 800;
+	var width = 850;
 	var colors = aChart.STYLES.select("color");
 	var BORDER = 2;
 	var HEIGHT = 30;

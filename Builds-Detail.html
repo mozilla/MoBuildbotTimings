@@ -33,11 +33,12 @@
 		<span class="loading"><img src="images/spinner.gif" alt=""></span>
 	</div>
 	<div id="breakdown">
-		<div id="chart_area" class="chart" style="width:800px;height:400px;">Please Wait</div>
+		<div id="chart_area" class="chart" style="width:800px;height:300px;">Please Wait</div>
 		<div id="details" layout="top=..top;left=chart_area.right;bottom=footer.top;">
 		</div>
-		<div id="raw_activedata" class="code" style="height:400px;border: 1px solid black; overflow: scroll;" layout="top=..top;left=details.right;right=window.right;"></div>
 		<div id="timeline" style="width:800px;height:200px;"></div>
+		<div id="raw_activedata"></div>
+
 	</div>
 </div>
 <div id="footer" style="height:50px;text-align: center;padding: 5px 0 5px 0;background-color: #fff;z-index: 12;" layout="bl=window.bl;br=window.br;">
@@ -70,6 +71,11 @@ importScript([
 		'<tr><td colspan="2" style="text-align: right"><a class="button" href="#" onClick="window.open(\'https://treeherder.mozilla.org/#/jobs?repo={{branch}}&revision={{revision}}\')">Go to Treeherder</a></td></tr>',
 		'</table>',
 		'</div>'
+	]);
+
+	var RECORD = new Template([
+		'<h3>ActiveData Record</h3>',
+		'<div class="padding"><div class="code" style="width:760px;height:400px;border: 1px solid black; overflow: scroll;">{{json}}</div></div>'
 	]);
 
 	var thread;
@@ -194,18 +200,16 @@ importScript([
 
 		Thread.run(function*(){
 			$("#raw_activedata").html("");
-			var a = Log.action("get timings", true)
+			$("#timeline").html("");
+
+			var a = Log.action("get timings", true);
 			try {
 				var details = yield (search({
 					"from": "jobs",
 					"where": {
 						"and": [
 							{"eq": (d.revision ? {"build.revision": d.revision} : {"action.start_time": d.start.unix()})},
-							{
-								"eq": {
-									"build.branch": d.branch
-								}
-							},
+							{"eq": {"build.branch": d.branch}},
 							totalsFilter
 						]
 					},
@@ -219,215 +223,17 @@ importScript([
 			var action = details.data[0].action;
 			var timings = Qb.sort(action.timings, "order");
 			action.timings = timings;
-			$("#raw_activedata").html(convert.String2HTML(convert.value2json(Array.unwrap(details.data))));
-
-			var width = 800;
-			var colors = aChart.STYLES.select("color");
-
-
-//			var xScale = scale.domain(action.start_time, action.end_time).range(0, width);
-			var xScale = d3.scale.linear().domain([action.start_time, action.end_time]).range([20, width-40]);
-
-			function start(d){
-				return xScale(coalesce(Map.get(d, "harness.start_time"), Map.get(d, "builder.start_time")));
-			}
-			function end(d){
-				return xScale(coalesce(Map.get(d, "harness.end_time"), Map.get(d, "builder.end_time")));
-			}
-			function duration(d){
-				return end(d)-start(d);
-			}
-			function level(d){
-				return (Map.get(d, "harness.start_time") ? 1 : 0)
-			}
-
-			var BORDER=2;
-			var HEIGHT = 30;
-			var LINE_PADDING = 10;
-
-			function yLine(d){
-				return LINE_PADDING + (HEIGHT + LINE_PADDING) * level(d);
-			}
-
-
-			d3.select("#timeline").selectAll("*").remove();
-
-			var svg = d3.select("#timeline")
-				.append("svg")
-				.width(width)
-				.height(200)
-				;
 
 
 
-			var e = svg.selectAll("rect").data(timings).enter();
-
-			e.append("rect") //SHOW BAR
-				.x(start)
-				.y(yLine)
-				.width(duration)
-				.height(HEIGHT)
-				.fill(function(d, i){return colors[i%colors.length];})
-				.on("mouseover", function(d){
-					return tip
-						.style({
-							"top": (d3.event.pageY+10)+"px",
-							"left": (d3.event.pageX+10)+"px",
-							"visibility": "visible"
-						})
-						.html(new Template('{{step}}<br>Duration = {{duration|format("H:mm:ss")}}').expand({
-							"step":coalesce(Map.get(d, "harness.step"), Map.get(d, "builder.step")),
-							"duration": Duration.newInstance(1000*coalesce(Map.get(d, "harness.duration"), Map.get(d, "builder.duration")))
-						}))
-					;
-				})
-				.on("mousemove", function(d){
-					return tip.style({
-						"top": (d3.event.pageY+10)+"px",
-						"left": (d3.event.pageX+10)+"px",
-					});
-				})
-				.on("mouseout", function(d){
-					return tip.style("visibility", "hidden");
-				})
-			;
-			e.append("rect")  //SHOW TIME MARKERS
-				.x(function(d){return start(d)-0.5;})
-				.y(function(d){return yLine(d)-5;})
-				.width(1)
-				.height(HEIGHT+10)
-				.fill("black")
-			;
-			e.append("svg")  //SHOW NAME OF EACH STEP (CLIP TO svg)
-				.x(function(d){return start(d)+BORDER})
-				.y(function(d){return yLine(d)+BORDER})
-				.width(function(d){
-					return Math.max(0, duration(d) - BORDER - BORDER)
-				})
-				.height(HEIGHT - BORDER - BORDER)
-				.append("text")
-				.text(function(d){
-					return coalesce(Map.get(d, "harness.step"), d.builder.step);
-				})
-				.y(HEIGHT - (BORDER*3))
-				.fill('black')
-			;
-
-			e.append("g")  //SHOW START TIMES FOR EACH STEP
-				.translate(5, -15)
-				.rotate(45)
-				.translate(
-					function(d){
-						return start(d) + BORDER
-					},
-					function(d){
-						return yLine(d) + HEIGHT + BORDER
-					}
-				)
-				.append("text")
-				.text(function(d){
-					if (duration(d)< 20 || level(d)==0) return "";
-					var s = coalesce(Map.get(d, "harness.start_time"), Map.get(d, "builder.start_time"));
-					return Duration.newInstance(1000*(s-action.start_time)).format("HH:mm:ss");
-				})
-				.y(HEIGHT - (BORDER*3))
-				.fill('black')
-			;
-
-			(function(d){
-				svg.append("g")  //SHOW end_time
-					.translate(5, -15)
-					.rotate(45)
-					.translate(end(d) + BORDER, yLine(d) + HEIGHT + BORDER)
-					.append("text")
-					.text(Duration.newInstance(1000*(action.end_time-action.start_time)).format("HH:mm:ss"))
-					.y(HEIGHT - (BORDER*3))
-					.fill('black')
-				;
-
-
-			})(timings.last());
-
-
+			$("#raw_activedata").html(RECORD.expand({"json":convert.String2HTML(convert.value2json(Array.unwrap(details.data)))}));
+			showTimeline(action, timings);
 		});
 
 
 
 
 	}
-
-
-	var tip = d3.select("body").append("div")
-		.attr("id", "tip")
-		.style({
-			"padding": "5px 10px 5px 10px",
-			"position": "absolute",
-			"visibility": "hidden",
-			"background-color": "black",
-			"color": "white",
-			"font-weight": "bold",
-			"align-text": "center"
-		})
-		.html("")
-		;
-
-
-
-	var proto = d3.selection.prototype;
-	["x", "y", "width", "height"].forall(function(name){
-		proto[name]=function(){
-			return proto.attr.apply(this, [name].appendArray(arguments));
-		}
-	});
-	["fill"].forall(function(name){
-		proto[name]=function(){
-			return proto.style.apply(this, [name].appendArray(arguments));
-		}
-	});
-	proto.transform=function(){
-		return (function(self, name, params){
-			return self.each(function(d, i){
-				var acc = this.getAttribute("transform");
-				var value = name+"("+params.map(function(f){
-						return isFunction(f) ?  f(d, i) : f;
-					}).join(",")+")";
-				this.setAttribute("transform", value+" "+coalesce(acc, ""));
-			});
-		})(this, arguments[0], Array.prototype.slice.call(arguments, 1));
-	};
-	["translate", "rotate"].forall(function(name){
-		proto[name]=function(){
-			return proto.transform.apply(this, [name].appendArray(arguments));
-		}
-	});
-
-
-	function scale (v){
-		return v;
-	}
-
-	(function(){
-		function domain(a, b, v){
-			return (this(v)-a)/(b-a);
-		}
-		function range(a, b, v){
-			return this(v)*(b-a) + a;
-		}
-
-		scale.domain = function(a, b){
-			var output = domain.bind(this, a, b);
-			output.domain = scale.domain;
-			output.range = scale.range;
-			return output;
-		};
-		scale.range = function(a, b){
-			var output = range.bind(this, a, b);
-			output.domain = scale.domain;
-			output.range = scale.range;
-		};
-	})();
-
-
 
 
 	Thread.showWorking = function(numThread){

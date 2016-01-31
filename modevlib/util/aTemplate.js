@@ -67,6 +67,9 @@ var Template = function Template(template){
 		return convert.value2quote(value);
 	};
 	FUNC.format = function(value, format){
+		if (value instanceof Duration){
+			return value.format(format);
+		}
 		return Date.newInstance(value).format(format);
 	};
 	FUNC.round = function(value, digits){

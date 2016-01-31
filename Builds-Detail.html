@@ -268,20 +268,26 @@ importScript([
 				.width(duration)
 				.height(HEIGHT)
 				.fill(function(d, i){return colors[i%colors.length];})
-				.on("mouseover", function(){
+				.on("mouseover", function(d){
+					return tip
+						.style({
+							"top": (d3.event.pageY+10)+"px",
+							"left": (d3.event.pageX+10)+"px",
+							"visibility": "visible"
+						})
+						.html(new Template('{{step}}<br>Duration = {{duration|format("H:mm:ss")}}').expand({
+							"step":coalesce(Map.get(d, "harness.step"), Map.get(d, "builder.step")),
+							"duration": Duration.newInstance(1000*coalesce(Map.get(d, "harness.duration"), Map.get(d, "builder.duration")))
+						}))
+					;
+				})
+				.on("mousemove", function(d){
 					return tip.style({
-						"top": d3.event.pageX+"px",
-						"left": d3.event.pageY+"px",
-						"visibility": "visible"
+						"top": (d3.event.pageY+10)+"px",
+						"left": (d3.event.pageX+10)+"px",
 					});
 				})
-				.on("mousemove", function(){
-					return tip.style({
-						"top": d3.event.pageX+"px",
-						"left": d3.event.pageY+"px"
-					});
-				})
-				.on("mouseout", function(){
+				.on("mouseout", function(d){
 					return tip.style("visibility", "hidden");
 				})
 			;
@@ -351,13 +357,19 @@ importScript([
 	}
 
 
-	var tip = d3.select("body").append("div").attr("id", "tip").style({
-		"position": "absolute",
-		"visibility": "hidden",
-		"background-color":"black",
-		"font-color": "white",
-		"font-weight": "bold"
-	}).html("this is a test");
+	var tip = d3.select("body").append("div")
+		.attr("id", "tip")
+		.style({
+			"padding": "5px 10px 5px 10px",
+			"position": "absolute",
+			"visibility": "hidden",
+			"background-color": "black",
+			"color": "white",
+			"font-weight": "bold",
+			"align-text": "center"
+		})
+		.html("")
+		;
 
 
 

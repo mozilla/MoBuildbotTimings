@@ -6,7 +6,11 @@ importScript("convert.js");
 
 
 var Template = function Template(template){
-	this.template = template;
+	if (template instanceof Template){
+		this.template = template.template;
+	}else{
+		this.template = template;
+	}//endif
 };
 
 (function(){

@@ -31,6 +31,9 @@ importScript("../qb/Expressions.js");
 		{"color": "#17becf"}
 	];
 
+
+
+
 	/*
 	 * SCATTER USES THE `select` COLUMNS FOR x AND y RESPECTIVELY
 	 * THE FIRST EDGE IS USED FOR CATEGORIES
@@ -38,6 +41,8 @@ importScript("../qb/Expressions.js");
 	aChart.showScatter = function(params){
 		Map.expecting(params, ["target", "data"]);
 		var styles = Map.clone(aChart.STYLES);
+
+
 
 		var data;
 		if (isArray(params.data) || Map.get(params, "data.meta.format")=="list") {
@@ -115,46 +120,49 @@ importScript("../qb/Expressions.js");
 		var x_accessor = coalesce(Map.get(params, "axis.x.value"), Map.get(xaxis, "name"));
 		var y_accessor = coalesce(Map.get(params, "axis.y.value"), Map.get(yaxis, "name"));
 
-
-		//POPUP FORMATTING
-		var format = Map.get(params, "hover.format");
-		var mouseover;
-		var y_rollover_format;
-		var x_rollover_format;
-		if (isString(format)) {
-			mouseover = function(d, i){
-				d3
-				.select('#' + params.target + ' svg .mg-active-datapoint')
-				.text(new Template(format).expand(d));
-			};
-		}else if (format) {
-			if (!format.x) format.x="{{.}}";
-			x_rollover_format =(function(t){
-				return function(d){
-					return t.expand(d);
-				};
-			})(new Template(format.x));
-
-			if (!format.y) format.y="{{.}}";
-			y_rollover_format = (function(t){
-				return function(d){
-					return t.expand(d);
-				};
-			})(new Template(format.y));
-
-			mouseover = function(d, i){
-				var point = d;
-				var text = x_rollover_format(Map.get(point, x_accessor))+" "+y_rollover_format(Map.get(point, y_accessor));
-				d3.select('#' + params.target + ' svg .mg-active-datapoint').text(text);
-			};
-		}else{
-			//AUTO FORMAT
-		}//endif
-
 		//CHAIN mouseover WITH SOME HOVER STYLE
-		(function(mouseoverOld){
-			mouseover = function(d, i){
+		var mouseover=undefined;
+		var mouseout=undefined;
+		(function(){
 
+			//STYLE THE TOOL TIPS
+			var DEFAULT_TIP_STYLE = {
+				"padding": "5px 10px 5px 10px",
+				"position": "absolute",
+				"visibility": "hidden",
+				"background-color": "black",
+				"color": "white",
+				"font-weight": "bold",
+				"align-text": "center"
+			};
+
+
+			var tip;
+			var format;
+			if (params.tip) {
+				if (!params.tip.style) params.tip.style = DEFAULT_TIP_STYLE;
+				format = new Template(coalesce(Map.get(params, "tip.format"), ""));
+
+				//THE TOOLTIP OBJECT
+				tip = d3.select("body").append("div")
+					.attr("id", "tip")
+					.style(params.tip.style)
+					;
+			}//endif
+
+			mouseover = function(d, i){
+				//SHOW TOOLTIP
+				if (tip) {
+					tip.style({
+								"top": (d3.event.pageY + 10) + "px",
+								"left": (d3.event.pageX + 10) + "px",
+								"visibility": "visible"
+							})
+							.html(format.expand(d))
+					;
+				}//endif
+
+				//HIGHLIGHT POINT
 				chartParams.hoverLayer.append("circle")
 						.cx(chartParams.scalefns.xf(d))
 						.cy(chartParams.scalefns.yf(d))
@@ -164,9 +172,16 @@ importScript("../qb/Expressions.js");
 						.attr("stroke-width", 3)
 				;
 				mouseoverOld(d, i);
-
 			};
-		})(mouseover);
+
+			mouseout = function(d, i){
+				if (tip) {
+					tip.style("visibility", "hidden");
+				}
+				chartParams.hoverLayer.html("")
+			};//function
+
+		})();
 
 		//CHAIN click TO HIGHLIGHT POINT
 		(function(clickOld){
@@ -184,8 +199,6 @@ importScript("../qb/Expressions.js");
 			};
 		})(params.click);
 
-
-
 		//X-AXIS FORMAT
 		var xax_format=Map.get(params, "axis.x.format");
 		if (xax_format){
@@ -199,6 +212,7 @@ importScript("../qb/Expressions.js");
 		if (DEBUG){
 			Log.note(convert.value2json(data));
 		}//endif
+
 		var chartParams = {
 			title: Map.get(params, "title.label"),
 			description: Map.get(params, "title.description"),
@@ -227,7 +241,9 @@ importScript("../qb/Expressions.js");
 			max_x: coalesce(Map.get(params, "axis.x.range.max"), Map.get(params, "axis.x.domain.max")),
 
 			x_rug: Map.get(params, "axis.x.rug"),
+			show_rollover_text: false,
 			mouseover: mouseover,
+			mouseout: mouseout,
 			click: params.click
 		};
 		MG.data_graphic(chartParams);

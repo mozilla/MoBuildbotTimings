@@ -34,8 +34,7 @@
 	</div>
 	<div id="breakdown">
 		<div id="chart_area" class="chart" style="width:800px;height:300px;">Please Wait</div>
-		<div id="details" layout="top=..top;left=chart_area.right;bottom=footer.top;">
-		</div>
+		<div id="details"></div>
 		<div id="timeline" style="width:800px;height:200px;"></div>
 		<div id="raw_activedata"></div>
 
@@ -59,17 +58,30 @@ importScript([
 	layoutAll();
 	sidebarSlider();
 
+
+	var HOVER = new Template(
+			'<b>{{status|upper}}</b><br>' +
+			'<b>Branch :</b>{{branch}}<br>'+
+			'<b>Revision :</b>{{revision|left(12)}}<br>' +
+			'<b>Start Time :</b>{{start|format("MMM dd, HH:mm")}}<br>' +
+			'<b>Duration :</b>{{duration|round(3)}} minutes'
+	);
+
+
+
 	var DETAIL = new Template([
-		'<div style="border:1px solid gray">'+
-		'<table id="properties">',
-		'<tr><td colspan="2"><b>{{status|upper}}</b></td></tr>',
-		'<tr><td style="text-align: right;"><b>Branch :</b></td><td style="text-align: left;padding-left:1em;">{{branch}}</td></tr>',
-		'<tr><td style="text-align: right;"><b>Revision :</b></td><td class="code" style="text-align: left;padding-left:1em;">{{revision|left(12)}}</td></tr>',
-		'<tr><td style="text-align: right;"><b>Start Time :</b></td><td style="text-align: left;padding-left:1em;">{{start|format("MMM dd, HH:mm")}}</td></tr>',
-		'<tr><td style="text-align: right;"><b>Duration :</b></td><td style="text-align: left;padding-left:1em;">{{duration|round(3)}} minutes</td></tr>',
-		'<tr><td colspan="2"><hr></td></tr>',
-		'<tr><td colspan="2" style="text-align: right"><a class="button" href="#" onClick="window.open(\'https://treeherder.mozilla.org/#/jobs?repo={{branch}}&revision={{revision}}\')">Go to Treeherder</a></td></tr>',
-		'</table>',
+		'<div style="position:relative;width:800px;padding:10px;">'+
+		'<table id="properties" style="width:100%;">',
+		'<tr>' +
+		'   <td style="text-align: right;"><b>{{status|upper}} :</b></td>' +
+		'   <td style="text-align: left;">&nbsp;<b>{{branch}}</b> rev {{revision|left(12)}}</td>' +
+		'   <td rowspan="3" style="text-align: right"><a class="button" href="#" onClick="window.open(\'https://treeherder.mozilla.org/#/jobs?repo={{branch}}&revision={{revision}}\')">Go to Treeherder</a></td>'+
+		'</tr>'+
+		'<tr>' +
+		'   <td style="text-align: right;"><b>Start Time :</b></td>' +
+		'   <td style="text-align: left;">&nbsp;{{start|format("MMM dd, HH:mm")}}</td>' +
+		'</tr>' +
+		'</table>' +
 		'</div>'
 	]);
 
@@ -158,6 +170,9 @@ importScript([
 			"target": "chart_area",
 			"hover":{"format": "{{duration|round(3)}}minutes"},
 			"data": details.data,
+			"tip":{
+				"format": HOVER
+			},
 			"series":[
 				{
 					"name": "Branch",
@@ -166,7 +181,7 @@ importScript([
 						"then": "branch",
 						"else": "success"
 					},
-					"axis":"color"
+					"axis":"color",
 				}
 			],
 			"axis": {
@@ -226,6 +241,7 @@ importScript([
 			action.timings = timings;
 
 			if (Thread.currentThread===detailThread) {
+				//ONLY UPDATE IF THIS IS STILL THE LAST ONE CLICKED
 				$("#raw_activedata").html(RECORD.expand({"json": convert.String2HTML(convert.value2json(Array.unwrap(details.data)))}));
 				showTimeline(action, timings);
 			}//endif

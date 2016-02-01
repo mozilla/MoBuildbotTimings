@@ -94,7 +94,10 @@ function showTimeline(action, timings){
 
 
 	var svg = d3.select("#timeline")
-			.html('<h3 style="padding-top:20px;">Timeline</h3>')
+			.html(
+					new Template('<h3 style="padding-top:10px;display: inline-block;">Timeline</h3> ({{duration|round(3)}} minutes)<br>')
+							.expand({"duration": action.duration/60})
+			)
 			.append("svg")
 			.width(width)
 			.height(200)

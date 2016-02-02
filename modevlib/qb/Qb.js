@@ -1534,6 +1534,9 @@ function joinField(path){
 		})[0];
 	};
 
+	qb.get = function(expr){
+		return qb2function(expr);
+	};//method
 
 	Q = calc2Cube;
 

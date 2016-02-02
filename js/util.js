@@ -204,7 +204,7 @@ function showTimeline(action, timings){
 			.on("mousemove", function(d){
 				return timelineTip.style({
 					"top": (d3.event.pageY + 10) + "px",
-					"left": (d3.event.pageX + 10) + "px",
+					"left": (d3.event.pageX + 10) + "px"
 				});
 			})
 			.on("mouseout", function(d){

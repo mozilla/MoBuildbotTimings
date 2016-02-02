@@ -229,9 +229,7 @@ importScript("../qb/Expressions.js");
 			color_domain: styles.map(function(v, i){
 				return i;
 			}),
-			color_range: styles.map(function(v){
-				return v.color;
-			}),
+			color_range: styles.select("color"),
 			legend: Map.getValues(params.axis).first().domain.partitions.select("name"),
 			color_type: 'category',
 

@@ -28,7 +28,7 @@
 </div>
 <div class="content" layout="top=page.top;left=sidebar_name.right;right=window.right;" style="padding: 10px 10px 50px 10px;">
 	<div id="header">
-		<h1 id="title" style="display: inline-block;">Firefox win64 Build Times</h1>
+		<h1 id="title" style="display: inline-block;">Build Times</h1>
 		<span id="status" style="height:30px">Page Loading...</span>
 		<span class="loading"><img src="images/spinner.gif" alt=""></span>
 	</div>
@@ -100,18 +100,32 @@ importScript([
 	};
 
 	var __createChart = function*(){
-		var startOfWeek = Date.today().subtract(Duration.WEEK);
-		var startTime = Date.today().subtract(Duration.WEEK);
-//		var startTime = Date.today().subtract(Duration.MONTH.multiply(2));
-		var platform = "win64";
+
+		var startTime = Date.newInstance(GUI.state.sampleMin);
+		var endTime = Date.newInstance(GUI.state.sampleMax);
+		var platformName = GUI.state.platform.getSimpleState();
+		var platformFilter = {"or": GUI.state.platform.getSelectedParts().select("fullFilter")};
+		var productName = GUI.state.product.getSimpleState();
+		var productFilter = {"or": GUI.state.product.getSelectedParts().select("fullFilter")};
+		var typeName = GUI.state.type.getSimpleState();
+		var typeFilter = {"or": GUI.state.type.getSelectedParts().select("fullFilter")};
+
+		if (!platformName){
+			$("#title").html("Expecting a platform");
+			yield (null);
+		}//endif
+
+		$("#title").html(new Template("{{type}} {{product}} {{platform}} Build Times").expand({
+			"type": typeName,
+			"product": productName,
+			"platform": platformName
+		}));
 
 		var totalsFilter = {"and":[
-			{"eq": {
-				"action.type": "build",
-				"build.product": "firefox",
-				"build.platform": platform
-			}},
-			{"missing": "build.type"}
+			{"eq": {"action.type": "build"}},
+			productFilter,
+			platformFilter,
+			typeFilter
 		]};
 
 		//SUMMARY OF BUILD TIMES SINCE minDate
@@ -121,7 +135,8 @@ importScript([
 			"where": {
 				"and": [
 					totalsFilter,
-					{"gt": {"action.start_time": startTime.unix()}}
+					{"gte": {"action.start_time": startTime.unix()}},
+					{"lt": {"action.start_time": endTime.unix()}}
 				]
 			},
 			"limit": 1000
@@ -150,7 +165,8 @@ importScript([
 				"where": {
 					"and": [
 						totalsFilter,
-						{"gt": {"action.start_time": startTime.unix()}}
+						{"gte": {"action.start_time": startTime.unix()}},
+						{"lt": {"action.start_time": endTime.unix()}}
 					]
 				},
 				"format": "list",
@@ -261,10 +277,33 @@ importScript([
 
 	$(document).ready(function(){
 		GUI.setup(createChart, [
+			{"id":"sampleMin", "name":"Start Date", "type":"time", "default":Date.eod().add("-3week")},
+			{"id":"sampleMax", "name":"End Date", "type":"time", "default":Date.today()},
+			{"id":"sampleInterval", "name":"Interval", "type":"duration", "default":"day"},
+			{"id": "platform", "name": "Platform", "type": PartitionFilter.newInstance({
+				"id": "platform",
+				"name": "platform",
+				"dimension": Mozilla.Builds.Platform,
+				"onlyOne": true,
+				"expandAll": true
+			})},
+			{"id": "type", "name": "Build Type", "default":"Standard", "type": PartitionFilter.newInstance({
+				"id": "type",
+				"name": "type",
+				"dimension": Mozilla.Builds.Type,
+				"onlyOne": true,
+				"expandAll": true
+			})},
+			{"id": "product", "name": "Product", "default":"Firefox", "type": PartitionFilter.newInstance({
+				"id": "product",
+				"name": "product",
+				"dimension": Mozilla.Builds.Product,
+				"onlyOne": true,
+				"expandAll": true
+			})},
 			],
-			[
-			],
-			"perfy",
+			[],
+			"",
 			false
 		);
 	});

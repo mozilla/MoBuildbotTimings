@@ -12,7 +12,7 @@ importScript("../util/aUtil.js");
 importScript("../util/aParse.js");
 importScript("../debug/aLog.js");
 importScript("MVEL.js");
-importScript("Qb.js");
+importScript("qb.js");
 
 importScript("../rest/ElasticSearch.js");
 importScript("../rest/Rest.js");
@@ -319,7 +319,7 @@ ESQuery.NOT_SUPPORTED = "From clause not supported \n{{from}}";
 
 		var output = yield (esq.run());
 
-		Map.copy(Qb.query.prototype, output);
+		Map.copy(qb.query.prototype, output);
 
 		if (output === undefined)
 			Log.error("what happened here?");
@@ -432,7 +432,7 @@ ESQuery.NOT_SUPPORTED = "From clause not supported \n{{from}}";
 		if (ESQuery.DEBUG) this.query.essize = 100;
 
 		this.query.esfilter = ESFilter.simplify(this.query.esfilter);
-		this.columns = Qb.compile(this.query, ESQuery.INDEXES[splitField(this.query.from)[0]].columns, true);
+		this.columns = qb.compile(this.query, ESQuery.INDEXES[splitField(this.query.from)[0]].columns, true);
 
 		var esFacets;
 
@@ -445,7 +445,7 @@ ESQuery.NOT_SUPPORTED = "From clause not supported \n{{from}}";
 		}else{
 			//THESE SMOOTH EDGES REQUIRE ALL DATA (SETOP)
 			this.query.edges.forall(function(e){
-				if (e.domain !== undefined && Qb.domain.ALGEBRAIC.contains(e.domain.type) && e.domain.interval == "none") {
+				if (e.domain !== undefined && qb.domain.ALGEBRAIC.contains(e.domain.type) && e.domain.interval == "none") {
 					smoothEdges.append({"name": e.name, "value": e.value, "domain": e.domain});
 				}//endif
 			});
@@ -514,7 +514,7 @@ ESQuery.NOT_SUPPORTED = "From clause not supported \n{{from}}";
 		//FIND THE specialEdge, IF ONE
 		this.specialEdge = null;
 		for (var f = 0; f < this.termsEdges.length; f++) {
-			if ((Qb.domain.KNOWN.contains(this.termsEdges[f].domain.type))) {
+			if ((qb.domain.KNOWN.contains(this.termsEdges[f].domain.type))) {
 				for (var p = this.termsEdges[f].domain.partitions.length; p--;) {
 					this.termsEdges[f].domain.partitions[p].dataIndex = p;
 				}//for
@@ -714,7 +714,7 @@ ESQuery.NOT_SUPPORTED = "From clause not supported \n{{from}}";
 		} else if (edge.range) {
 			//THESE REALLY NEED FACETS TO PERFORM THE JOIN-TO-DOMAIN
 			//USE MVEL CODE
-			if (Qb.domain.ALGEBRAIC.contains(edge.domain.type)) {
+			if (qb.domain.ALGEBRAIC.contains(edge.domain.type)) {
 				output = {"and": []};
 
 				if (edge.range.mode !== undefined && edge.range.mode == "inclusive") {
@@ -771,7 +771,7 @@ ESQuery.NOT_SUPPORTED = "From clause not supported \n{{from}}";
 			return ESFilter.simplify(partition.esfilter);
 		} else if (MVEL.isKeyword(edge.value)) {
 			//USE FAST ES SYNTAX
-			if (Qb.domain.ALGEBRAIC.contains(edge.domain.type)) {
+			if (qb.domain.ALGEBRAIC.contains(edge.domain.type)) {
 				output.range = {};
 				output.range[edge.value] = {"gte": MVEL.Value2Query(partition.min), "lt": MVEL.Value2Query(partition.max)};
 			} else if (edge.domain.type == "set") {
@@ -791,7 +791,7 @@ ESQuery.NOT_SUPPORTED = "From clause not supported \n{{from}}";
 			return output;
 		} else {
 			//USE MVEL CODE
-			if (Qb.domain.ALGEBRAIC.contains(edge.domain.type)) {
+			if (qb.domain.ALGEBRAIC.contains(edge.domain.type)) {
 				output.script = {script: edge.value + ">=" + MVEL.Value2MVEL(partition.min) + " && " + edge.value + "<" + MVEL.Value2MVEL(partition.max)};
 			} else {//if (edge.domain.type == "set"){
 				output.script = {script: "( " + edge.value + " ) ==" + MVEL.Value2MVEL(partition.value)};
@@ -966,7 +966,7 @@ ESQuery.NOT_SUPPORTED = "From clause not supported \n{{from}}";
 				t = ESQuery.compileTime2Term(e);
 			} else if (e.domain.type == "duration") {
 				t = ESQuery.compileDuration2Term(e);
-			} else if (Qb.domain.ALGEBRAIC.contains(e.domain.type)) {
+			} else if (qb.domain.ALGEBRAIC.contains(e.domain.type)) {
 				t = ESQuery.compileNumeric2Term(e);
 			} else if (e.domain.type == "set" && e.domain.field === undefined) {
 				t = {
@@ -1154,7 +1154,7 @@ ESQuery.NOT_SUPPORTED = "From clause not supported \n{{from}}";
 
 	//RETURN A MVEL EXPRESSION THAT WILL EVALUATE TO true FOR OUT-OF-BOUNDS
 	ESQuery.compileNullTest = function(edge){
-		if (!Qb.domain.ALGEBRAIC.contains(edge.domain.type))
+		if (!qb.domain.ALGEBRAIC.contains(edge.domain.type))
 			Log.error("can only translate time and duration domains");
 
 		//IS THERE A LIMIT ON THE DOMAIN?
@@ -1218,7 +1218,7 @@ ESQuery.NOT_SUPPORTED = "From clause not supported \n{{from}}";
 			}//for
 		}//for
 
-		//NUMBER ALL EDGES FOR Qb INDEXING
+		//NUMBER ALL EDGES FOR qb INDEXING
 		for (var f = 0; f < this.query.edges.length; f++) {
 			var edge = this.query.edges[f];
 			if (edge.domain.type == "default") {
@@ -1238,7 +1238,7 @@ ESQuery.NOT_SUPPORTED = "From clause not supported \n{{from}}";
 		//MAKE CUBE
 		var select = this.query.select;
 		if (select === undefined) select = [];
-		var cube = Qb.cube.newInstance(this.query.edges, 0, select);
+		var cube = qb.cube.newInstance(this.query.edges, 0, select);
 
 
 		//FILL CUBE
@@ -1365,10 +1365,10 @@ ESQuery.NOT_SUPPORTED = "From clause not supported \n{{from}}";
 			return;
 		}//endif
 
-		//MAKE Qb
-		cube = Qb.cube.newInstance(this.query.edges, 0, this.query.select);
+		//MAKE qb
+		cube = qb.cube.newInstance(this.query.edges, 0, this.query.select);
 
-		//FILL Qb
+		//FILL qb
 		if (self.query.select instanceof Array) {
 			Map.forall(data.facets, function(edgeName, facetValue){
 				var coord = edgeName.split(",");
@@ -1431,10 +1431,10 @@ ESQuery.NOT_SUPPORTED = "From clause not supported \n{{from}}";
 		this.specialEdge.domain.partitions = partitions;
 
 
-		//MAKE Qb
-		var cube = Qb.cube.newInstance(this.query.edges, 0, this.query.select);
+		//MAKE qb
+		var cube = qb.cube.newInstance(this.query.edges, 0, this.query.select);
 
-		//FILL Qb
+		//FILL qb
 		for (var k = 0; k < keys.length; k++) {
 			var edgeName = keys[k];
 			var coord = edgeName.split(",");

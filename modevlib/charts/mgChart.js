@@ -51,7 +51,7 @@ importScript("../qb/Expressions.js");
 			params.series.forall(function(s){
 				var getter = qb2function(s.value);
 				var edge = params.axis[s.axis];
-				Qb.domain.compile(edge);
+				qb.domain.compile(edge);
 				edge.domain.NULL.style = Map.get(edge, "missing.style");
 
 				if (s.axis=="color"){
@@ -68,7 +68,7 @@ importScript("../qb/Expressions.js");
 				}//endif
 			});
 		} else if (params.data.meta) {
-			//ASSUME Qb QUERY RESULT
+			//ASSUME qb QUERY RESULT
 			var chartCube = params.data;
 			if (!(chartCube.select instanceof Array) || chartCube.select.length != 2) {
 				Log.error("Expecting `select` clause to have two columns");
@@ -255,7 +255,7 @@ importScript("../qb/Expressions.js");
 	RETURN A NICE MAX VALUE, THAT INCLUDES THE IMPORTANT CHART VALUES
 	 */
 	aChart.maxNice=function(values){
-		var sorted = Qb.sort(values, ".");
+		var sorted = qb.sort(values, ".");
 		var mostlyMax = sorted[aMath.ceiling(values.length*0.90)];
 		var max = sorted.last();
 

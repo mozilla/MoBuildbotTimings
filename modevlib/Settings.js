@@ -91,7 +91,7 @@ importScript("charts/aColor.js");
 
 		},
 
-		//REGISTER GENERATORS THAT HANDLE Qb QUERIES
+		//REGISTER GENERATORS THAT HANDLE qb QUERIES
 		"host_types":{
 
 

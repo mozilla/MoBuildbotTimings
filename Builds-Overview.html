@@ -128,7 +128,7 @@ importScript([
 		var rows=$("#chart_area");
 		rows.html("");
 
-		var ordered = Qb.sort(Mozilla.Builds.Type.getDomain().partitions, "ordering");
+		var ordered = qb.sort(Mozilla.Builds.Type.getDomain().partitions, "ordering");
 
 		ordered.forall(function(type, p){
 			var formalPart = averages.edges[0].domain.partitions.filter(function(p){return p.value==type.value;})[0];

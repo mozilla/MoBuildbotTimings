@@ -13,7 +13,7 @@ importScript("../modevlib/charts/cccChart.js");
 importScript("../modevlib/charts/aColor.js");
 importScript("../css/menu.css");
 importScript("../modevlib/math/Stats.js");
-importScript("../modevlib/qb/Qb.js");
+importScript("../modevlib/qb/qb.js");
 importScript("../modevlib/charts/tools.js");
 
 

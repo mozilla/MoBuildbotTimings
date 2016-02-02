@@ -237,7 +237,7 @@ importScript([
 			}//try
 
 			var action = details.data[0].action;
-			var timings = Qb.sort(action.timings, "order");
+			var timings = qb.sort(action.timings, "order");
 			action.timings = timings;
 
 			if (Thread.currentThread===detailThread) {

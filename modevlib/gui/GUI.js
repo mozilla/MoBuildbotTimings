@@ -498,7 +498,7 @@ GUI = {};
 							GUI.refreshChart();
 						}
 					});
-					$("#" + param.id).val(defaultValue.join(","));
+					$("#" + param.id).val(Array.newInstance(defaultValue).join(","));
 				} else {
 					if (param.type == "string") param.type = "text";
 					$("#" + param.id).change(function () {

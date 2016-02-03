@@ -13,13 +13,14 @@
 <div id="sidebar" layout="tl=window.tl;bottom=footer.bottom;" style="width:0;overflow:hidden;">
 	<div id="description" style="padding-left:10px;">
 		<h3>About</h3>
-		An overview of current build times.  Click on a chart of a timeseries view.
+		Specific build times.  Click on the chart for a timeline of the build selected.
 	</div>
 	<hr>
 	<div id="last-updated" style="text-align: center;width:300px;"></div>
 	<hr>
 	<div id="filters" style="width:300px;" class="menu">
 	</div>
+	<hr>
 	<div id="parameters">
 	</div>
 </div>
@@ -258,6 +259,7 @@ importScript([
 
 			if (Thread.currentThread===detailThread) {
 				//ONLY UPDATE IF THIS IS STILL THE LAST ONE CLICKED
+				details.data.forall(function(d){d.action.timings=undefined;});
 				$("#raw_activedata").html(RECORD.expand({"json": convert.String2HTML(convert.value2json(Array.unwrap(details.data)))}));
 				showTimeline(action, timings);
 			}//endif
@@ -279,7 +281,6 @@ importScript([
 		GUI.setup(createChart, [
 			{"id":"sampleMin", "name":"Start Date", "type":"time", "default":Date.eod().add("-3week")},
 			{"id":"sampleMax", "name":"End Date", "type":"time", "default":Date.today()},
-			{"id":"sampleInterval", "name":"Interval", "type":"duration", "default":"day"},
 			{"id": "platform", "name": "Platform", "type": PartitionFilter.newInstance({
 				"id": "platform",
 				"name": "platform",

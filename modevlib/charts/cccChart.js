@@ -799,7 +799,7 @@ function findDateMarks(part, name){
 	try{
 	var output = [];
 	Array.newInstance(part.dateMarks).forall(function (mark) {
-		var style = Map.setDefault({}, mark.style, part.style, {"color": "black", "lineWidth": "2.0", verticalAnchor: "top"});
+		var style = Map.setDefault({}, mark.style, part.style, {color: "black", lineWidth: "2.0", verticalAnchor: "top"});
 		style.strokeStyle = coalesce(style.strokeStyle, style.color);
 		style.textStyle = coalesce(style.textStyle, style.color);
 

@@ -696,11 +696,19 @@ ESQuery.NOT_SUPPORTED = "From clause not supported \n{{from}}";
 			//MUST USE THIS' esFacet
 			var condition = coalesce(partition.esfilter, {"and": []});
 
-			if (partition.min !== undefined && partition.max !== undefined && MVEL.isKeyword(edge.value)) {
+			if (Qb.domain.ALGEBRAIC.contains(edge.domain.type)) {
 				condition.and.push({
-					"range": Map.newInstance(edge.value, {"gte": partition.min, "lt": partition.max})
+					"range": Map.newInstance(edge.value, {"gte": MVEL.Value2Query(partition.min), "lt": MVEL.Value2Query(partition.max)})
+				});
+			} else if (edge.domain.type == "set") {
+				condition.and.push({
+					"term": Map.newInstance(edge.value, edge.domain.getKey(partition))
 				})
-			}
+			} else if (edge.domain.type == "default") {
+				Log.error("Can not use esFacet==true with default (unknown) domain with name\"" + edge.name + "\"");
+			} else {
+				Log.error("Edge \"" + edge.name + "\" is not supported");
+			}//endif
 
 			//ES WILL FREAK OUT IF WE SEND {"not":{"and":x}} (OR SOMETHING LIKE THAT)
 //		var parts=edge.domain.partitions;

@@ -54,6 +54,8 @@ qb.domain.compile = function(column, sourceColumns){
 	} else{
 		Log.error("Do not know how to compile a domain of type '" + type + "'");
 	}//endif
+
+	return domain;
 };//method
 
 
@@ -1352,7 +1354,7 @@ qb.domain.range = function(column, sourceColumns){
 	d.getPartByKey = function(key){
 		var output = d.NULL;
 		d.partitions.forall(function(r){
-			if (r.min <= key < r.max) output = r;
+			if (r.min <= key && key < r.max) output = r;
 		});
 		return output;
 	};//method

@@ -88,7 +88,8 @@ importScript([
 			"select": {
 				"name": "average",
 				"value": {"div":{"action.duration":60}},
-				"aggregate": "average"
+				"aggregate": "average",
+				"default": 0
 			},
 			"edges": [
 				{
@@ -101,9 +102,7 @@ importScript([
 					"allowNulls":false,
 					"domain": {
 						"type": "set",
-						"partitions": Mozilla.Builds.Platform.partitions.map(function(p){
-							return p.value;
-						})
+						"partitions": Mozilla.Builds.Platform.partitions.select("value")
 					}
 				}
 			],
@@ -181,6 +180,8 @@ importScript([
 					},
 					"limit": 1000
 				};
+
+				//GET TIME SERIES FROM ACtiveData
 				var a=Log.action("Get "+type.value, true);
 				try {
 					var timeSeries = yield (search(queryTimes));
@@ -196,49 +197,63 @@ importScript([
 				});
 				chartMax = aMath.niceCeiling(chartMax);
 
-
+				var platformDomain=qb.domain.compile({"domain": Mozilla.Builds.Platform.getDomain()});
 
 				aChart.show({
-					"id":"chart"+p,
-					"type":"bar",
-					"stacked":false,
-					"width": 200,
-					"height":200,
-					"cube": {
+					id: "chart" + p,
+					type: "bar",
+					stacked: false,
+					width: 200,
+					height: 200,
+					cube: {
 						"select": averages.select,
-						"data": averages.data.average[index].map(function(v){return coalesce(v, 0);}),
+						"data": averages.data.average[index].map(function(v){
+							return coalesce(v, 0);
+						}),
 						"edges": averages.edges.slice(1)
 					},
 					orthoAxisFixedMax: chartMax,
-					"legendPosition":"right",
-					"legendSize":0,
+					legendPosition: "right",
+					legendSize: 0,
 					xAxisSize: 50,
 					extensionPoints: {
 						line_lineWidth: 2
 					},
-					"clickAction":function(channel, _benchmark, value){
-						//DO NOTHING
-						return;
+					clickAction: function(platform, aggregate, value){
+						var param = {
+							"sampleMin": beginPastWeek.format("yyyy-MM-dd"),
+							"product": "Firefox",
+							"type": type.name,
+							"platform": platformDomain.getPartByKey(platform).name.replaceAll(" ", "_")
+						};
+						window.open("Builds-Detail.html#" + convert.Object2URL(param));
 					}
 				});
 
 				aChart.show({
-					"id":"chartseries"+p,
-					"type":"line",
-					"stacked":false,
-					"width": 800,
-					"height":200,
-					"cube": timeSeries,
+					id: "chartseries" + p,
+					type: "line",
+					stacked: false,
+					width: 800,
+					height: 200,
+					cube: timeSeries,
 					orthoAxisFixedMax: chartMax,
-					"legendPosition":"left",
-					"legendSize":100,
+					legendPosition: "left",
+					legendSize: 100,
 					xAxisSize: 50,
 					extensionPoints: {
 						line_lineWidth: 2
 					},
-					"clickAction":function(channel, _benchmark, value){
-						//DO NOTHING
-						return;
+					clickAction: function(platform, date, value){
+						var param = {
+							"sampleMin": Date.newInstance(date).floorDay().subtract(Duration.DAY.multiply(2)).format("yyyy-MM-dd"),
+							"sampleMax": Date.newInstance(date).floorDay().add(Duration.DAY.multiply(3)).format("yyyy-MM-dd"),
+							"product": "Firefox",
+							"type": type,
+							"platform": platformDomain.getPartByKey(platform).name.replaceAll(" ", "_")
+						};
+						window.open("Builds-Detail.html#" + convert.Object2URL(param));
+
 					}
 				});
 
@@ -250,16 +265,6 @@ importScript([
 
 		dynamicLayout();
 
-
-		//ADD CLICK HANDLERS
-		$( ".hoverable" ).click(function(self) {
-			var index=this.id.substring("chart".length).split("_");
-			var param={
-				"platform":Mozilla.Builds.Platform.getDomain().partitions[index[0]].value.replaceAll(" ", "_"),
-				"benchmark":Mozilla.Builds.Benchmark.getDomain().partitions[index[1]].value.replaceAll(" ", "_")
-			};
-			window.open("Builds-TimeSeries.html#"+CNV.Object2URL(param));
-		});
 	}
 
 	Thread.showWorking = function(numThread){
@@ -277,7 +282,7 @@ importScript([
 			],
 			[
 			],
-			"perfy",
+			"",
 			false
 		);
 	});

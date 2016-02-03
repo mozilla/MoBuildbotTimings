@@ -19,7 +19,7 @@ Dimension.addEdges(false, Mozilla, [{
         {"name": "Leak Test", "ordering": 3, "style": {"color": "#f6b26b"}, "value": "leak test", "esfilter": {"term": {"build.type": "leak test"}}},
         {"name": "static Analysis", "ordering": 4, "style": {"color": "#f6b26b"}, "value": "static analysis", "esfilter": {"term": {"build.type": "static analysis"}}},
         {"name": "ASAN", "ordering": 5, "style": {"color": "#f6b26b"}, "value": "asan", "esfilter": {"term": {"build.type": "asan"}}},
-        {"name": "Standard", "value": null, "ordering": 6, "esfilter": {"missing": "build.type"}}
+        {"name": "Standard", "value": null, "ordering": 0, "esfilter": {"missing": "build.type"}}
       ]
     },
     {

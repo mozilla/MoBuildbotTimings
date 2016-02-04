@@ -54,10 +54,12 @@ function sidebarSlider(){
 			self.removeClass("selected");
 			$("#sidebar").css({"width": "0px"});
 			dynamicLayout();
+			setTimeout(dynamicLayout, 500);
 		} else {
 			self.addClass("selected");
 			$("#sidebar").css({"width": WIDTH});
 			dynamicLayout();
+			setTimeout(dynamicLayout, 500);
 		}//endif
 	});
 }

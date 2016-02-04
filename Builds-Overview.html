@@ -38,8 +38,8 @@
 </div>
 
 <div id="row_template" style="visibility:hidden;">
-	<div class="hoverable" style="padding:10px 20px 10px 20px;">
-		<h4 class="hoverable">{{TITLE}}</h4>
+	<div style="padding:10px 20px 10px 20px;">
+		<h4>{{TITLE}}</h4>
 
 		<div id="chartseries{{ROWNUM}}" class="chart" style="display: inline-block;"></div>
 		<div id="chart{{ROWNUM}}" class="chart" style="display: inline-block;"></div>
@@ -69,8 +69,8 @@ importScript([
 	};
 
 	var __createChart = function*(){
-		var beginPastWeek = Date.today().subtract(Duration.WEEK);
-		var beginPastMonth = Date.today().subtract(Duration.MONTH.multiply(2));
+		var beginPastWeek = Date.today().add("-week");
+		var beginPastMonth = Date.today().add("-2month");
 		var totalsFilter = {"and":[
 			{"eq": {
 				"action.type": "build",
@@ -246,8 +246,8 @@ importScript([
 					},
 					clickAction: function(platform, date, value){
 						var param = {
-							"sampleMin": Date.newInstance(date).floorDay().subtract(Duration.DAY.multiply(2)).format("yyyy-MM-dd"),
-							"sampleMax": Date.newInstance(date).floorDay().add(Duration.DAY.multiply(3)).format("yyyy-MM-dd"),
+							"sampleMin": Date.newInstance(date).floorDay().add("-2day").format("yyyy-MM-dd"),
+							"sampleMax": Date.newInstance(date).floorDay().add("3day").format("yyyy-MM-dd"),
 							"product": "Firefox",
 							"type": type,
 							"platform": platformDomain.getPartByKey(platform).name.replaceAll(" ", "_")

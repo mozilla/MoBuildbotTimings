@@ -31,7 +31,8 @@ Dimension.addEdges(false, Mozilla, [{
         {"name": "OSX64", "style": {"color": "#a4c739"}, "value": "macosx64", "esfilter": {"term": {"build.platform": "macosx64"}}},
         {"name": "Windows32", "style": {"color": "#136bab"}, "value": "win32", "esfilter": {"term": {"build.platform": "win32"}}},
         {"name": "Windows64", "style": {"color": "#136bab"}, "value": "win64", "esfilter": {"term": {"build.platform": "win64"}}}
-      ]
+      ],
+      "esfilter": {"not": {"contains": {"run.key": "br-haz"}}}
     },
     {"name": "Product", "field": "build.product",
       "partitions": [

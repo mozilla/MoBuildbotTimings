@@ -59,7 +59,6 @@ importScript([
 	layoutAll();
 	sidebarSlider();
 
-
 	var HOVER = new Template(
 			'<b>{{status|upper}}</b><br>' +
 			'<b>Branch :</b>{{branch}}<br>'+
@@ -67,8 +66,6 @@ importScript([
 			'<b>Start Time :</b>{{start|format("MMM dd, HH:mm")}}<br>' +
 			'<b>Duration :</b>{{duration|round(3)}} minutes'
 	);
-
-
 
 	var DETAIL = new Template([
 		'<div style="position:relative;width:800px;padding:10px;">'+
@@ -158,7 +155,7 @@ importScript([
 				"select":[
 					{"name":"start", "value":"action.start_time"},
 					{"name":"status", "value":"action.buildbot_status"},
-					{"name":"duration", "value":{"div":{"action.duration": 60}}},
+					{"name": "duration", "value": {"div": {"action.duration": 60}, "default": 0}},
 					{"name":"branch", "value":"build.branch"},
 					{"name":"revision", "value":"build.revision"},
 					{"name":"pool", "value":"run.machine.pool"}

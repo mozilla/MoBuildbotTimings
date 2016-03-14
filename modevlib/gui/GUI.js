@@ -329,7 +329,7 @@ importScript("../aFormat.js");
           if (v.trim()==""){
             GUI.state[k]=[];
           }else{
-            GUI.state[k] = v.split(",").map(String.trim);
+            GUI.state[k] = v.split(",").map(String.trim).unwrap();
           }//endif
         } else if (p && p.type == "code") {
           v = v.escape(Map.inverse(GUI.urlMap));
@@ -337,7 +337,7 @@ importScript("../aFormat.js");
         } else if (GUI.state[k].isFilter) {
           GUI.state[k].setSimpleState(v);
         } else {
-          GUI.state[k] = v.split(",");
+          GUI.state[k] = v.split(",").unwrap();
         }//endif
       });
     };
@@ -525,7 +525,7 @@ importScript("../aFormat.js");
         } else if (param.type == "datetime") {
           $("#" + param.id).val(Date.newInstance(GUI.state[param.id]).format("yyyy-MM-dd HH:mm:ss"))
         } else if (param.type == "set") {
-          $("#" + param.id).val(GUI.state[param.id].join(","))
+          $("#" + param.id).val(Array.newInstance(GUI.state[param.id]).join(","))
         } else {
         //if (param.type.getSimpleState) return;  //param.type===GUI.state[param.id] NO ACTION REQUIRED
           $("#" + param.id).val(GUI.state[param.id]);

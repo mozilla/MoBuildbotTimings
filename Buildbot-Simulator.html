@@ -13,7 +13,12 @@
 <div id="sidebar" layout="tl=window.tl;bottom=footer.bottom;" style="width:0;overflow:hidden;">
     <div id="description" style="padding-left:10px;">
         <h3>About</h3>
-        An overview of current build times. Click on a chart of a timeseries view.
+        Overview of BuildBot Job Timing and Waits<br><br>
+
+        <b>Request Block Size</b> - Jobs do not arrive randomly, rather in blocks, all in the same second.  The chart counts the number of occurrences for each block size.<br><br>
+        <b>Job Duration</b> - Jobs are grouped by how long they take (to the minute), counted, and charted.<br><br>
+        <b>Inter-Job Timing</b> - For each machine, measures the amount of time from the end of one job to the start of the next, when jobs are waiting. This provides us with an estimate of the unmeasured time between jobs.<br><br>
+
     </div>
     <hr>
     <div id="last-updated" style="text-align: center;width:300px;"></div>
@@ -27,20 +32,24 @@
     <div>Configuration</div>
 </div>
 <div class="content" layout="top=page.top;left=sidebar_name.right;" style="padding: 10px 10px 50px 10px;">
-    <h1 id="title">Buildbot Simulator (t-yosemite-r7)</h1>
+    <h1 id="title">Buildbot Simulator</h1>
     <div style="padding:10px 20px 10px 20px;">
         <table><tbody><tr><td>
+            Historical Active Machines (2min added to end of each job)
+            <div id="history_active_machines" class="chart"></div>
             Historical Queue Size
             <div id="history_queue_size" class="chart"></div>
             Historical Wait Times (minutes)
             <div id="history_wait_times" class="chart"></div>
+            Simulated Active Machines
+            <div id="simulated_active_machines" class="chart"></div>
             Simulated Queue Size
             <div id="simulated_queue_size" class="chart"></div>
             Simulated Wait Times (minutes)
             <div id="simulated_wait_times" class="chart"></div>
         </td><td style="width:250px;">
             <div>
-                Count of Job-Request-Block Size<br>
+                Request Block Size<br>
                 <div id="block_size" class="chart"></div>
             </div>
             <div>
@@ -86,10 +95,24 @@
             dynamicLayout();
 
             var pool = GUI.state.pool;
-            var poolFilter = {"in": {"run.machine.pool": pool}};
+            var poolFilter = {"eq": {"run.machine.pool": pool}};
 
-            var date= GUI.state.date;
+            var date=Date.newInstance(GUI.state.date);
             var timeRange={"min":date, "max":date.add("day"), "interval":"15minute"};
+
+            $("#title").html(new Template("Buildbot Simulator ({{pool|html}}, {{date|format('EE, NNN dd')}})").expand({"date":date, "pool":pool}));
+
+            //CLEAR ALL CHARTS
+            $("#history_active_machines").html("");
+            $("#history_queue_size").html("");
+            $("#history_wait_times").html("");
+            $("#simulated_active_machines").html("");
+            $("#simulated_queue_size").html("");
+            $("#simulated_wait_times").html("");
+            $("#block_size").html("");
+            $("#durations").html("");
+            $("#inter_job_timing").html("");
+
             collect_day(timeRange, poolFilter);
             show_history(timeRange, poolFilter);
             block_size(timeRange, poolFilter);
@@ -111,7 +134,7 @@
             GUI.setup(
                 createChart,
                 [
-                    {"id": "date", "name": "Date", "type": "date", "default": "yesterday"},
+                    {"id": "date", "name": "Date", "type": "date", "default": Date.today().subtract(Duration.DAY)},
                     {"id": "pool", "name": "Pool", "type": "set", "default":"t-yosemite-r7"}
                 ],
                 [],

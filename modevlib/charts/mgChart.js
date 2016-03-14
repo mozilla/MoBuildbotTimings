@@ -5,7 +5,7 @@
 importScript("../../lib/metrics-graphics/import.js");
 importScript("../../lib/jquery.js");
 importScript("../qb/Expressions.js");
-
+importScript("tools.js");
 
 (function(){
   var DEBUG = true;

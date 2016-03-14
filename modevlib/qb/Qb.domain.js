@@ -879,7 +879,7 @@ qb.domain.count = function(column, sourceColumns){
       }catch(e){
         Log.error();
       }
-      if (key < 0){
+      if (key < d.min){
         column.outOfDomainCount++;
         return this.NULL;
       }//endif
@@ -998,18 +998,22 @@ qb.domain.set = function(column, sourceColumns){
 
 
   //ALL PARTS MUST BE FORMAL OBJECTS SO THEY CAN BE ANNOTATED
-  if (typeof(d.partitions[0])=="string"){
+  if (typeof(d.partitions[0])=="string") {
     d.partitions.forall(function(part, i){
-      if (typeof(part)!="string") Log.error("Partition list can not be heterogeneous");
+      if (typeof(part) != "string") Log.error("Partition list can not be heterogeneous");
       part = {"name": part, "value": part, "dataIndex": i};
-      d.partitions[i]=part;
+      d.partitions[i] = part;
     });
-    d.value="name";
-    d.key="value";
+    d.value = "name";
+    d.key = "value";
 
     //COLUMNS FOR PARTITIONS MUST BE PROPERLY UPDATED
-    d.columns=[{"name":"name"}, {"name":"value"}, {"name":"dataIndex"}];
-    d.NULL.value=null;
+    d.columns = [{"name": "name"}, {"name": "value"}, {"name": "dataIndex"}];
+    d.NULL.value = null;
+  }else{
+    d.partitions.forall(function(part, i){
+      part.dataIndex=i;
+    });
   }//endif
 
 

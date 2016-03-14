@@ -169,14 +169,14 @@ importScript("../aFormat.js");
           tm.html(new Template("<div style={{style|style}}>{{name}}</div>").expand(result.index));
           tm.append("<br>ES Last Updated " + time.addTimezone().format("NNN dd @ HH:mm") + Date.getTimezone());
         } else if (indexName == "reviews") {
-                    var result = yield (ESQuery.run({
-                        "from": "reviews",
-                        "select": [
-                            {"name": "last_request", "value": "request_time", "aggregate": "maximum"}
-                        ]
-                    }));
-                    time = Date.newInstance(result.cube.last_request);
-                    $("#testMessage").html("Reviews Last Updated " + time.addTimezone().format("NNN dd @ HH:mm") + Date.getTimezone());
+          var result = yield (ESQuery.run({
+            "from": "reviews",
+            "select": [
+              {"name": "last_request", "value": "request_time", "aggregate": "maximum"}
+            ]
+          }));
+          time = Date.newInstance(result.cube.last_request);
+          $("#testMessage").html("Reviews Last Updated " + time.addTimezone().format("NNN dd @ HH:mm") + Date.getTimezone());
         } else if (indexName == "bug_tags") {
           esHasErrorInIndex = false;
           time = yield (BUG_TAGS.getLastUpdated());
@@ -426,7 +426,7 @@ importScript("../aFormat.js");
               GUI.refreshChart();
             }
           });
-          defaultValue = defaultValue.format("yyyy-MM-dd");
+          defaultValue = Date.newInstance(defaultValue).format("yyyy-MM-dd");
           $("#" + param.id).val(defaultValue);
           ////////////////////////////////////////////////////////////////////////
           // DURATION

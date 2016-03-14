@@ -7,8 +7,6 @@ importScript("../util/aUtil.js");
 
 
 
-
-
 (function(){
   var DEBUG=true;
 
@@ -304,7 +302,13 @@ importScript("../util/aUtil.js");
   //EXPECTING ONE ARGUMENT, WHICH IS A LIST OF AN ARRAYS, EACH REPRESENTING A SET
   Array.union = function union(){
     var arrays = (arguments.length==1  && arguments[0] instanceof Array) ? arguments[0] : arguments;
+    return Array.UNION(arrays);
+  };
 
+  Array.UNION = function(arrays){
+    /*
+     * EXPECTING A LIST OF ARRAYS TO union
+     */
     var output={};
     for (var j = arrays.length; j--;) {
       var a = Array.newInstance(arrays[j]);

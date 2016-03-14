@@ -889,11 +889,12 @@ var aChart = {};
         //first row is series names, first column of each row is category name
         var data;
         if (chartCube.edges.length == 1) {
-            if (chartCube.select instanceof Array) {
+            if (chartCube.select instanceof Array || chartCube.select.aggregate=="count") {
+                var select=Array.newInstance(chartCube.select);
                 //GIVE EACH SELECT A ROW
                 data = [];
-                for (var s = 0; s < chartCube.select.length; s++) {
-                    data.push(cube[chartCube.select[s].name]);
+                for (var s = 0; s < select.length; s++) {
+                    data.push(cube[select[s].name]);
                 }//for
             } else if (qb.domain.ALGEBRAIC.contains(chartCube.edges[0].domain.type)) {
                 //ALGEBRAIC DOMAINS ARE PROBABLY NOT MULTICOLORED
@@ -1151,14 +1152,23 @@ var aChart = {};
                 if (v instanceof String) {
                     return v;
                 } else if (v.milli === undefined) {
-                    return v.value.toString();
+                    return coalesce(v.value, v.min).toString();
                 } else {
                     return "" + v.divideBy(Duration.DAY);
-//        return v.toString();
+                }//endif
+            });
+        } else if (["range", "count"].contains(axis.domain.type)) {
+            labels = axis.domain.partitions.map(function (v, i) {
+                if (v instanceof String) {
+                    return v;
+                } else {
+                    return v.min.toString();
                 }//endif
             });
         } else if (axis.domain.type == "numeric") {
             labels = axis.domain.partitions.select("name");
+        }else if (Array.UNION(axis.domain.partitions.select("value")).length< axis.domain.partitions.length){
+            Log.warning("Some unsual domain of type="+axis.domain.type+" and some parts are missing `value` property");
         } else {
             labels = axis.domain.partitions.map(function (v, i) {
                 if (v instanceof String) {

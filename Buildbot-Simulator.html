@@ -1,0 +1,130 @@
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<HTML>
+<HEAD>
+    <script type="text/javascript" src="modevlib/imports/import.js"></script>
+    <link type="text/css" rel="stylesheet" href="css/menu.css"/>
+</HEAD>
+<BODY>
+
+
+<div id="sidebar" layout="tl=window.tl;bottom=footer.bottom;" style="width:0;overflow:hidden;">
+    <div id="description" style="padding-left:10px;">
+        <h3>About</h3>
+        An overview of current build times. Click on a chart of a timeseries view.
+    </div>
+    <hr>
+    <div id="last-updated" style="text-align: center;width:300px;"></div>
+    <hr>
+    <div id="filters" style="width:300px;" class="menu">
+    </div>
+    <div id="parameters">
+    </div>
+</div>
+<div id="sidebar_name" class="sidebar_name" layout="top=window.top;bottom=footer.top;left=sidebar.right;">
+    <div>Configuration</div>
+</div>
+<div class="content" layout="top=page.top;left=sidebar_name.right;" style="padding: 10px 10px 50px 10px;">
+    <h1 id="title">Buildbot Simulator (t-yosemite-r7)</h1>
+    <div style="padding:10px 20px 10px 20px;">
+        <table><tbody><tr><td>
+            Historical Queue Size
+            <div id="history_queue_size" class="chart"></div>
+            Historical Wait Times (minutes)
+            <div id="history_wait_times" class="chart"></div>
+            Simulated Queue Size
+            <div id="simulated_queue_size" class="chart"></div>
+            Simulated Wait Times (minutes)
+            <div id="simulated_wait_times" class="chart"></div>
+        </td><td style="width:250px;">
+            <div>
+                Count of Job-Request-Block Size<br>
+                <div id="block_size" class="chart"></div>
+            </div>
+            <div>
+                Job Duration<br>
+                <div id="durations" class="chart"></div>
+            </div>
+            <div>
+                Inter-Job Timing<br>
+                <div id="inter_job_timing" class="chart"></div>
+            </div>
+        </td></tr></tbody></table>
+    </div>
+
+</div>
+<div id="footer" style="height:50px;text-align: center;padding: 5px 0 5px 0;background-color: #fff;z-index: 12;"
+     layout="bl=window.bl;br=window.br;">
+    Source at <a href="https://github.com/mozilla/MoBuildbotTimings">https://github.com/mozilla/MoBuildbotTimings</a><br>
+    Wiki <a href="https://wiki.mozilla.org/Auto-tools/Projects/DevelopmentMetrics">https://wiki.mozilla.org/Auto-tools/Projects/DevelopmentMetrics</a>
+</div>
+
+
+<script type="application/javascript">
+
+    importScript([
+        'modevlib/main.js',
+        'js/util.js',
+        'js/simulator.js',
+        'modevlib/layouts/layout.js',
+        'modevlib/charts/cccChart.js',
+        'modevlib/Dimension-Builds.js'
+    ], function () {
+        layoutAll();
+        sidebarSlider();
+
+        var thread;
+        var createChart = function () {
+            if (thread !== undefined)
+                thread.kill();
+            thread = Thread.run(__createChart());
+        };
+
+        var __createChart = function*() {
+            dynamicLayout();
+
+            var pool = GUI.state.pool;
+            var poolFilter = {"in": {"run.machine.pool": pool}};
+
+            var date= GUI.state.date;
+            var timeRange={"min":date, "max":date.add("day"), "interval":"15minute"};
+            collect_day(timeRange, poolFilter);
+            show_history(timeRange, poolFilter);
+            block_size(timeRange, poolFilter);
+            interJobEstimate(timeRange, poolFilter);
+
+        };
+
+        Thread.showWorking = function (numThread) {
+            var l = $(".loading");
+            l.show();
+        };//function
+
+        Thread.hideWorking = function () {
+            var l = $(".loading");
+            l.hide();
+        };//function
+
+        $(document).ready(function () {
+            GUI.setup(
+                createChart,
+                [
+                    {"id": "date", "name": "Date", "type": "date", "default": "yesterday"},
+                    {"id": "pool", "name": "Pool", "type": "set", "default":"t-yosemite-r7"}
+                ],
+                [],
+                "",
+                false
+            );
+        });
+
+    });
+
+</script>
+
+
+</BODY>
+</HTML>
+

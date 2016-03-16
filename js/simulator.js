@@ -8,6 +8,7 @@ function simulate(data, num_machines, time_domain){
   var inactive_machines = new PriorityQueue();  // CONTAINS (done_time, machine)
   var request_queue = new PriorityQueue();      // CONTAINS (request_time, duration)
   var job_pending_queue = new Queue();          // CONTAINS (request_time, duration)
+  var sleeping_machines = new PriorityQueue();      // CONTAINS (available_time, machine)  //MACHINES NOT WORKING, BUT NOT AVAILABLE FOR WORK
 
   Array.newRange(0, num_machines).forall(function(i){
     inactive_machines.add(time_domain.min.unix(), i);
@@ -349,7 +350,7 @@ function show_history(dateRange, poolFilter){
       "from": "jobs",
       "select": [
         {"name": "start_time", "value": "action.start_time"},
-        {"name": "end_time", "value": {"add":{"action.end_time":120}}}
+        {"name": "end_time", "value": "action.end_time"}
       ],
       "where": {
         "and": [
@@ -559,17 +560,28 @@ function interJobEstimate(date_range, poolFilter){
     });
 
     var timeToNextJob = [];
+    var busy_machine={};
     qb.groupby(response.data, "machine").forall(function(pair){
       var machine = pair[0];
       var actions = pair[1];
+
+      var busy=0;
       actions = qb.sort(actions, "start_time");
       actions.forall(function(a, i){
+        busy += a.end_time- a.start_time;
+
         if (i == 0) return;
         var end_time = actions[i - 1].end_time;
         if (waiting.excludes(end_time, a.start_time)) {
           timeToNextJob.append({"machine": machine, "restart_time": (a.start_time - end_time) * 1000});
         }//endif
       });
+      busy_machine[machine]=busy;
+    });
+
+    var busy_percent = Map.map(busy_machine, function(m, b){
+      busy_machine[m] = b / (date_range.max.unix() - date_range.min.unix());
+      return busy_percent;
     });
 
     var interJobTiming = yield (Q({
@@ -580,7 +592,7 @@ function interJobEstimate(date_range, poolFilter){
           "name": "restart_time",
           "value": "restart_time",
           "allowNulls": false,
-          "domain": {"type": "duration", "min": 0, "max": 5 * 60 * 1000, "interval": 15000}
+          "domain": {"type": "duration", "min": 0, "max": 10 * 60 * 1000, "interval": 15000}
         }
       ]
     }));

@@ -1,4 +1,8 @@
-function simulate(data, num_machines, time_domain){
+
+
+
+
+function simulate(data, machineSleepTimes, num_machines, time_domain){
   /*
    * data - EXPECTING list() OF (request_time, duration) PAIRS
    * num_machines - NUMBER OF RESOURCES
@@ -10,11 +14,19 @@ function simulate(data, num_machines, time_domain){
   var job_pending_queue = new Queue();          // CONTAINS (request_time, duration)
   var sleeping_machines = new PriorityQueue();      // CONTAINS (available_time, machine)  //MACHINES NOT WORKING, BUT NOT AVAILABLE FOR WORK
 
+  function sleepyTime(){
+    //return 120;
+    var random = Math.floor(Math.random() * machineSleepTimes.length);
+    var restartTime = machineSleepTimes[random].restart_time/1000;
+    //restartTime=aMath.min(restartTime, 5*60);
+    return restartTime;
+  }
+
   Array.newRange(0, num_machines).forall(function(i){
     inactive_machines.add(time_domain.min.unix(), i);
   });
   data.forall(function(d){
-    request_queue.add(d[0], d[1]);
+    request_queue.add(d.request_time, d.duration);
   });
 
   // FOR EACH INTERVAL CALCULATE WHAT'S HAPPENING
@@ -23,6 +35,8 @@ function simulate(data, num_machines, time_domain){
     active: [],
     new: [],
     pending: [],
+    sleeping: [],
+    new_requests: [],
     average_wait_time: []
   };
 
@@ -30,14 +44,24 @@ function simulate(data, num_machines, time_domain){
   Date.range(time_domain).forall(function(t){
     var timestamp = t.unix();
 
-    // POP OFF MACHINES THAT ARE DONE
+    // POP OFF MACHINES THAT WOULD BE AVAILABLE
     var done_machines = pop_until(active_machines, timestamp);
-    inactive_machines.extend(done_machines);
+
+    // PUT THEM TO SLEEP
+    done_machines.forall(function(pair){
+      pair[0]+=sleepyTime();
+    });
+    sleeping_machines.extend(done_machines);
+
+    // FIND ANY THAT WILL HAVE WOKEN WOKE UP
+    var waking_machines = pop_until(sleeping_machines, timestamp);
+    inactive_machines.extend(waking_machines);
+
+    //inactive_machines.extend(done_machines);
 
     // ADD REQUESTS TO THE PENDING QUEUE
     var new_requests = pop_until(request_queue, timestamp);
     job_pending_queue.extend(new_requests);
-
 
     while (inactive_machines.size() > 0 && job_pending_queue.size() > 0) {
       var requestPair = job_pending_queue.pop();
@@ -45,27 +69,39 @@ function simulate(data, num_machines, time_domain){
       var requestTime = requestPair[0];
       var duration = requestPair[1];
       if (requestTime > timestamp) {
-        job_pending_queue.push(requestPair);
+        job_pending_queue.add(requestTime, duration);
         break;
       }//endif
 
       var availablePair = inactive_machines.pop();
       if (!availablePair) {
-        job_pending_queue.push(requestPair);
+        job_pending_queue.add(requestTime, duration);
         break;
       }//endif
       var availableTime = availablePair[0];
       var machine = availablePair[1];
+      if (availableTime > timestamp) {
+        inactive_machines.add(availableTime, machine);
+        job_pending_queue.add(requestTime, duration);
+        break;
+      }//endif
+
+
       var finishTime = aMath.max(availableTime, requestTime) + duration;
-      if (finishTime > timestamp) {
+      var wakeUpTime = finishTime + sleepyTime();
+
+      if (timestamp < finishTime) {
         active_machines.add(finishTime, machine);
-      } else {
+      //} else if (finishTime <= timestamp && timestamp < wakeUpTime) {
+      //  sleeping_machines.add(wakeUpTime, machine)
+      } else{
         inactive_machines.add(finishTime, machine);
       }//endif
     }//while
 
     // PENDING QUEUE STATS
     var num_active = active_machines.size();
+    var num_sleeping = sleeping_machines.size();
     var num_pending = job_pending_queue.size();
     var queue_sample = job_pending_queue.toArray();
     var average = 0;
@@ -77,6 +113,8 @@ function simulate(data, num_machines, time_domain){
     values.active.append(num_active);
     values.new.append(new_requests.length);
     values.pending.append(num_pending);
+    values.new_requests.append(new_requests.length);
+    values.sleeping.append(num_sleeping);
     values.average_wait_time.append(average / 60);
   });
 
@@ -143,6 +181,36 @@ function simulate(data, num_machines, time_domain){
     }
   });
 
+  //aChart.show({
+  //  id: "simulated_sleeping_machines",
+  //  type: "line",
+  //  stacked: false,
+  //  width: 800,
+  //  height: 200,
+  //  cube: Map.copy({"select": {"name": "sleeping"}}, timeSeries),
+  //  legendPosition: "left",
+  //  legendSize: 100,
+  //  xAxisSize: 50,
+  //  extensionPoints: {
+  //    line_lineWidth: 2
+  //  }
+  //});
+  //
+  //aChart.show({
+  //  id: "simulated_new_requests",
+  //  type: "line",
+  //  stacked: false,
+  //  width: 800,
+  //  height: 200,
+  //  cube: Map.copy({"select": {"name": "new_requests"}}, timeSeries),
+  //  legendPosition: "left",
+  //  legendSize: 100,
+  //  xAxisSize: 50,
+  //  extensionPoints: {
+  //    line_lineWidth: 2
+  //  }
+  //});
+
 
 }//function
 
@@ -151,6 +219,7 @@ function pop_until(queue, timestamp){
   /*
    * POP (timestamp, item) PAIRS OFF THE QUEUE UP TO THE timestamp POINT
    */
+  var queueSize = queue.size();
   var output = [];
   while (true) {
     var pair = queue.pop();
@@ -160,6 +229,9 @@ function pop_until(queue, timestamp){
 
     if (pairTimestamp > timestamp) {
       queue.push(pairTimestamp, pairValue);
+      if (queueSize!=output.length+queue.size()){
+        Log.error("Not expected");
+      }//endif
       return output;
     }//endif
     output.append([pairTimestamp, pairValue]);
@@ -173,7 +245,7 @@ function collect_day(date_range, poolFilter){
       "from": "jobs",
       "select": [
         {"name": "request_time", "value": "action.request_time"},
-        {"name": "duration", "value": {"add": ["action.duration", 120]}}
+        {"name": "duration", "value": "action.duration"}
       ],
       "where": {
         "and": [
@@ -186,8 +258,7 @@ function collect_day(date_range, poolFilter){
       "limit": 100000
     }));
 
-    var data = response.data;
-    simulate(data, 200, date_range);
+    simulate(response.data, 200, date_range);
   });
 }//function
 
@@ -528,93 +599,96 @@ function block_size(date_range, poolFilter){
 }//function
 
 
-function interJobEstimate(date_range, poolFilter){
+
+function* interJobEstimate(date_range, poolFilter){
   //GET ALL WAITING JOBS
-  Thread.run(function*(){
-    var response = yield (search({
-      "from": "jobs",
-      "select": [
-        {"name": "machine", "value": "run.machine.name"},
-        {"name": "request_time", "value": "action.request_time"},
-        {"name": "start_time", "value": "action.start_time"},
-        {"name": "end_time", "value": "action.end_time"}
-      ],
-      "where": {
-        "and": [
-          poolFilter,
-          {"gte": {"action.start_time": date_range.min.unix()}},
-          {"lt": {"action.request_time": date_range.max.unix()}}
-        ]
-      },
-      "format": "list",
-      "limit": 100000
-    }));
-
-
-    //UNION WAIT TIMES
-    var waiting = new Cover();
-    response.data.forall(function(d){
-      if (d.start_time > d.request_time + 60) {
-        waiting.add(d.request_time, d.start_time);
-      }//endif
-    });
-
-    var timeToNextJob = [];
-    var busy_machine={};
-    qb.groupby(response.data, "machine").forall(function(pair){
-      var machine = pair[0];
-      var actions = pair[1];
-
-      var busy=0;
-      actions = qb.sort(actions, "start_time");
-      actions.forall(function(a, i){
-        busy += a.end_time- a.start_time;
-
-        if (i == 0) return;
-        var end_time = actions[i - 1].end_time;
-        if (waiting.excludes(end_time, a.start_time)) {
-          timeToNextJob.append({"machine": machine, "restart_time": (a.start_time - end_time) * 1000});
-        }//endif
-      });
-      busy_machine[machine]=busy;
-    });
-
-    var busy_percent = Map.map(busy_machine, function(m, b){
-      busy_machine[m] = b / (date_range.max.unix() - date_range.min.unix());
-      return busy_percent;
-    });
-
-    var interJobTiming = yield (Q({
-      "select": {"name": "count", "aggregate": "count"},
-      "from": timeToNextJob,
-      "edges": [
-        {
-          "name": "restart_time",
-          "value": "restart_time",
-          "allowNulls": false,
-          "domain": {"type": "duration", "min": 0, "max": 10 * 60 * 1000, "interval": 15000}
-        }
+  var response = yield (search({
+    "from": "jobs",
+    "select": [
+      {"name": "machine", "value": "run.machine.name"},
+      {"name": "request_time", "value": "action.request_time"},
+      {"name": "start_time", "value": "action.start_time"},
+      {"name": "end_time", "value": "action.end_time"},
+      {"name": "duration", "value": "action.duration"}
+    ],
+    "where": {
+      "and": [
+        poolFilter,
+        {"gte": {"action.start_time": date_range.min.unix()}},
+        {"lt": {"action.request_time": date_range.max.unix()}}
       ]
-    }));
-
-    aChart.show({
-      id: "inter_job_timing",
-      type: "bar",
-      stacked: false,
-      width: 400,
-      height: 200,
-      cube: interJobTiming,
-      legendPosition: "left",
-      legendSize: 100,
-      xAxisSize: 50,
-      extensionPoints: {
-        line_lineWidth: 2
-      }
-    })
+    },
+    "format": "list",
+    "limit": 100000
+  }));
 
 
+  //UNION WAIT TIMES
+  var waiting = new Cover();
+  response.data.forall(function(d){
+    if (d.start_time > d.request_time + 60) {
+      waiting.add(d.request_time, d.start_time);
+    }//endif
   });
 
+  var timeToNextJob = [];
+  var busy_machine={};
+  qb.groupby(response.data, "machine").forall(function(pair){
+    var machine = pair[0];
+    var actions = pair[1];
+
+    var busy=0;
+    actions = qb.sort(actions, "start_time");
+    actions.forall(function(a, i){
+      busy += a.end_time- a.start_time;
+
+      if (i == 0) return;
+      var end_time = actions[i - 1].end_time;
+      if (waiting.excludes(end_time, a.start_time)) {
+        timeToNextJob.append({"machine": machine, "restart_time": (a.start_time - end_time) * 1000});
+      }//endif
+    });
+    busy_machine[machine]=busy;
+  });
+
+  var busy_percent = Map.map(busy_machine, function(m, b){
+    busy_machine[m] = b / (date_range.max.unix() - date_range.min.unix());
+    return busy_percent;
+  });
+
+  var machineSleepTimes = qb.sort(timeToNextJob, "restart_time");
+
+  var interJobTiming = yield (Q({
+    "select": {"name": "count", "aggregate": "count"},
+    "from": timeToNextJob,
+    "edges": [
+      {
+        "name": "restart_time",
+        "value": "restart_time",
+        "allowNulls": true,
+        "domain": {"type": "duration", "min": 0, "max": 5 * 60 * 1000, "interval": 15000}
+      }
+    ]
+  }));
+
+  $("#content").append(convert.value2json(interJobTiming.cube));
+
+  aChart.show({
+    id: "inter_job_timing",
+    type: "bar",
+    stacked: false,
+    width: 400,
+    height: 200,
+    cube: interJobTiming,
+    legendPosition: "left",
+    legendSize: 100,
+    xAxisSize: 50,
+    extensionPoints: {
+      line_lineWidth: 2
+    }
+  });
+
+  yield ([response.data, machineSleepTimes])
 
 }//function
 
@@ -737,3 +811,6 @@ Queue.prototype.size = function(){
 Queue.prototype.toArray = function(){
   return this.list.copy();
 };//function
+
+
+

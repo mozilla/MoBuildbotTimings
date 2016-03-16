@@ -310,7 +310,7 @@ importScript("../aFormat.js");
         })[0];
 
         if (p && qb.domain.ALGEBRAIC.contains(p.type)) {
-          v = v.escape(Map.inverse(GUI.urlMap));
+          //v = v.escape(Map.inverse(GUI.urlMap));
           GUI.state[k] = v;
         } else if (p && p.type == "json") {
           try {

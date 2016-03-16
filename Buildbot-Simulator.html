@@ -43,6 +43,10 @@
             <div id="history_wait_times" class="chart"></div>
             Simulated Active Machines
             <div id="simulated_active_machines" class="chart"></div>
+            <!--Simulated Sleeping Machines-->
+            <!--<div id="simulated_sleeping_machines" class="chart"></div>-->
+            <!--Simulated New Requests-->
+            <!--<div id="simulated_new_requests" class="chart"></div>-->
             Simulated Queue Size
             <div id="simulated_queue_size" class="chart"></div>
             Simulated Wait Times (minutes)
@@ -113,10 +117,12 @@
             $("#durations").html("");
             $("#inter_job_timing").html("");
 
-            collect_day(timeRange, poolFilter);
+            Thread.run(function*(){
+                var pair = yield(interJobEstimate(timeRange, poolFilter));
+                simulate(pair[0], pair[1], GUI.state.num, timeRange);
+            });
             show_history(timeRange, poolFilter);
             block_size(timeRange, poolFilter);
-            interJobEstimate(timeRange, poolFilter);
 
         };
 
@@ -135,7 +141,8 @@
                 createChart,
                 [
                     {"id": "date", "name": "Date", "type": "date", "default": Date.today().subtract(Duration.DAY)},
-                    {"id": "pool", "name": "Pool", "type": "set", "default":"t-yosemite-r7"}
+                    {"id": "pool", "name": "Pool", "type": "set", "default":"t-yosemite-r7"},
+                    {"id": "num", "name": "Num Machines", "type": "count", "default":"200"}
                 ],
                 [],
                 "",

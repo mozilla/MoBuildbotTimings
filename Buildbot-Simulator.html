@@ -18,7 +18,7 @@
         <b>Request Block Size</b> - Jobs do not arrive randomly, rather in blocks, all in the same second.  The chart counts the number of occurrences for each block size.<br><br>
         <b>Job Duration</b> - Jobs are grouped by how long they take (to the minute), counted, and charted.<br><br>
         <b>Inter-Job Timing</b> - For each machine, measures the amount of time from the end of one job to the start of the next, when jobs are waiting. This provides us with an estimate of the unmeasured time between jobs.<br><br>
-
+        The bar charts with <i>NULL</i> on the right is representing a count of measures outside the domain. Hopefully, it will give you an idea of how long the tail is.
     </div>
     <hr>
     <div id="last-updated" style="text-align: center;width:300px;"></div>
@@ -35,6 +35,8 @@
     <h1 id="title">Buildbot Simulator</h1>
     <div style="padding:10px 20px 10px 20px;">
         <table><tbody><tr><td>
+            New Requests
+            <div id="new_requests" class="chart"></div>
             Historical Active Machines
             <div id="history_active_machines" class="chart"></div>
             Historical Queue Size
@@ -45,8 +47,6 @@
             <div id="simulated_active_machines" class="chart"></div>
             <!--Simulated Sleeping Machines-->
             <!--<div id="simulated_sleeping_machines" class="chart"></div>-->
-            <!--Simulated New Requests-->
-            <!--<div id="simulated_new_requests" class="chart"></div>-->
             Simulated Queue Size
             <div id="simulated_queue_size" class="chart"></div>
             Simulated Wait Times (minutes)
@@ -63,6 +63,10 @@
             <div>
                 Inter-Job Timing<br>
                 <div id="inter_job_timing" class="chart"></div>
+            </div>
+            <div>
+                Sleepy Machines
+                <div id="sleepy_machines"></div>
             </div>
         </td></tr></tbody></table>
     </div>
@@ -112,14 +116,33 @@
             $("#history_wait_times").html("");
             $("#simulated_active_machines").html("");
             $("#simulated_queue_size").html("");
+            $("#simulated_sleeping_machines").html("");
+            $("#new_requests").html("");
+
             $("#simulated_wait_times").html("");
             $("#block_size").html("");
             $("#durations").html("");
             $("#inter_job_timing").html("");
+            $("#sleepy_machines").html("");
 
             Thread.run(function*(){
                 var pair = yield(interJobEstimate(timeRange, poolFilter));
-                simulate(pair[0], pair[1], GUI.state.num, timeRange);
+                var data = pair[0];
+                var machineSleepTimes = pair[1];
+
+                var topSleepy=qb.reverse(machineSleepTimes).slice(0, 5);
+                topSleepy.forall(function(v){
+                    v.restart_time= aMath.round(v.restart_time/1000/60, {"digits":4});
+                });
+                var options = {"columns": [
+                    {"name":"Machine", "value":"machine"},
+                    {"name":"Restart Time (minutes)", "value":"restart_time"},
+                    {"name":"Start Time", "value":"start_time"}
+                ]};
+                $("#sleepy_machines").html(convert.List2HTMLTable(topSleepy, options));
+
+
+                simulate(data, machineSleepTimes, GUI.state.num, timeRange);
             });
             show_history(timeRange, poolFilter);
             block_size(timeRange, poolFilter);
@@ -142,7 +165,7 @@
                 [
                     {"id": "date", "name": "Date", "type": "date", "default": Date.today().subtract(Duration.DAY)},
                     {"id": "pool", "name": "Pool", "type": "set", "default":"t-yosemite-r7"},
-                    {"id": "num", "name": "Num Machines", "type": "count", "default":"200"}
+                    {"id": "num", "name": "Num Machines", "type": "count", "default":"197"}
                 ],
                 [],
                 "",

@@ -41,8 +41,13 @@ function simulate(data, machineSleepTimes, num_machines, time_domain){
   };
 
 
+  var timestamp=time_domain.min.unix()-Duration.newInstance(time_domain.interval).seconds();
   Date.range(time_domain).forall(function(t){
-    var timestamp = t.unix();
+    var temp = t.unix();
+    if (temp!=timestamp+Duration.newInstance(time_domain.interval).seconds()){
+      Log.error("not expected");
+    }//endif
+    timestamp = temp;
 
     // POP OFF MACHINES THAT WOULD BE AVAILABLE
     var done_machines = pop_until(active_machines, timestamp);
@@ -195,9 +200,9 @@ function simulate(data, machineSleepTimes, num_machines, time_domain){
   //    line_lineWidth: 2
   //  }
   //});
-  //
+
   //aChart.show({
-  //  id: "simulated_new_requests",
+  //  id: "new_requests",
   //  type: "line",
   //  stacked: false,
   //  width: 800,
@@ -414,6 +419,53 @@ function show_history(dateRange, poolFilter){
 
 
   Thread.run(function*(){
+    //NEW REQUESTS
+
+
+    var newRequests = yield (search({
+      "from": "jobs",
+      "edges": [
+        {
+          "name": "request_time",
+          "value": "action.request_time",
+          "domain": {
+            "type": "time",
+            "min": dateRange.min.unix(),
+            "max": dateRange.max.unix(),
+            "interval": dateRange.interval.seconds()
+          }
+        }
+      ],
+      "where": {
+        "and": [
+          {"gte": {"action.start_time": dateRange.min.unix()}},
+          {"lt": {"action.request_time": dateRange.max.unix()}},
+          poolFilter
+        ]
+      },
+      "limit": 100000
+    }));
+
+
+    aChart.show({
+      id: "new_requests",
+      type: "bar",
+      stacked: false,
+      width: 800,
+      height: 200,
+      cube: newRequests,
+      legendPosition: "left",
+      legendSize: 100,
+      xAxisSize: 50,
+      extensionPoints: {
+        line_lineWidth: 2
+      }
+    });
+
+  });
+
+
+  Thread.run(function*(){
     //NUM ACTIVE MACHINES
 
 
@@ -615,7 +667,7 @@ function* interJobEstimate(date_range, poolFilter){
       "and": [
         poolFilter,
         {"gte": {"action.start_time": date_range.min.unix()}},
-        {"lt": {"action.request_time": date_range.max.unix()}}
+        {"lt": {"action.start_time": date_range.max.unix()}}
       ]
     },
     "format": "list",
@@ -644,8 +696,15 @@ function* interJobEstimate(date_range, poolFilter){
 
       if (i == 0) return;
       var end_time = actions[i - 1].end_time;
-      if (waiting.excludes(end_time, a.start_time)) {
-        timeToNextJob.append({"machine": machine, "restart_time": (a.start_time - end_time) * 1000});
+      if (a.start_time<actions[i-1].start_time){
+        Log.error("Expecting order")
+      }//endif
+      if (waiting.includes(end_time, a.start_time)) {
+        timeToNextJob.append({
+          "machine": machine,
+          "restart_time": (a.start_time - end_time) * 1000,
+          "start_time":a.start_time
+        });
       }//endif
     });
     busy_machine[machine]=busy;
@@ -722,6 +781,7 @@ Cover.prototype.contains = function(min, max){
   }//for
   return false;
 };//function
+Cover.prototype.includes=Cover.prototype.contains;
 
 Cover.prototype.excludes = function(min, max){
   // RETURN true IF this HAS NO OVERLAP WITH GIVEN RANGE

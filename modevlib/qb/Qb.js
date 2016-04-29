@@ -335,8 +335,7 @@ function joinField(path){
 			if (edges[g].outOfDomainCount > 0)
 				Log.warning(edges[g].name + " has " + edges[g].outOfDomainCount + " records outside domain " + edges[g].domain.name);
 		}//for
-		if (DEBUG) Log.note("Where clause rejected " + numWhereFalse + " rows");
-
+		if (DEBUG && numWhereFalse!=0) Log.note("Where clause rejected " + numWhereFalse + " rows");
 
 		yield query;
 	}

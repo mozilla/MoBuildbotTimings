@@ -11,6 +11,10 @@ String.prototype.trim = function(values){
 	return this.substring(s, Math.max(s, e + 1));
 };
 
+String.toLowerCase = function(value){
+	return value.toLowerCase()
+};
+
 String.join = function(list, seperator){
 	var output = "";
 	for (var i = 0; i < list.length; i++) {

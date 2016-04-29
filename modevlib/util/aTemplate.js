@@ -22,7 +22,7 @@ var Template = function Template(template){
 		}//endif
 
 		function lower(v){
-			if (typeof(v) == "object" && !(v instanceof Array) && !(v instanceof Date)) {
+			if (typeof(v) == "object" && !(v instanceof Array) && !(v instanceof Date) && !(v instanceof Duration)) {
 				var newMap = {};
 				Map.forall(v, function(k, v){
 					newMap[k.toLowerCase()] = lower(v);

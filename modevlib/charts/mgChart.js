@@ -8,7 +8,7 @@ importScript("../qb/Expressions.js");
 importScript("tools.js");
 
 (function(){
-	var DEBUG = true;
+	var DEBUG = false;
 	window.aChart = window.aChart || {};
 
 	////////////////////////////////////////////////////////////////////////////

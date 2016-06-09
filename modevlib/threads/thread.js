@@ -360,7 +360,9 @@ build = function(){
 
 		if (Thread.isRunning.length == 0) {
 			Thread.hideWorking();
-		}else{
+		}//endif
+
+		if (DEBUG && Thread.isRunning.length > 0) {
 			Log.note("Threads running:\n"+Thread.isRunning.select("name").join(",\n").indent());
 		}//endif
 	};

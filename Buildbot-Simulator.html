@@ -106,7 +106,7 @@
             var poolFilter = {"eq": {"run.machine.pool": pool}};
 
             var date=Date.newInstance(GUI.state.date).add("8hour");
-            var timeRange={"min":date, "max":date.add("day"), "interval":"15minute"};
+            var timeRange={"min":date, "max":date.add("day"), "interval":Duration.newInstance("15minute")};
 
             $("#title").html(new Template("Buildbot Simulator ({{pool|html}}, {{date|format('EE, NNN dd')}})").expand({"date":date, "pool":pool}));
 

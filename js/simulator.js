@@ -201,20 +201,20 @@ function simulate(data, machineSleepTimes, num_machines, time_domain){
   //  }
   //});
 
-  //aChart.show({
-  //  id: "new_requests",
-  //  type: "line",
-  //  stacked: false,
-  //  width: 800,
-  //  height: 200,
-  //  cube: Map.copy({"select": {"name": "new_requests"}}, timeSeries),
-  //  legendPosition: "left",
-  //  legendSize: 100,
-  //  xAxisSize: 50,
-  //  extensionPoints: {
-  //    line_lineWidth: 2
-  //  }
-  //});
+  aChart.show({
+    id: "new_requests",
+    type: "line",
+    stacked: false,
+    width: 800,
+    height: 200,
+    cube: Map.copy({"select": {"name": "new_requests"}}, timeSeries),
+    legendPosition: "left",
+    legendSize: 100,
+    xAxisSize: 50,
+    extensionPoints: {
+      line_lineWidth: 2
+    }
+  });
 
 
 }//function

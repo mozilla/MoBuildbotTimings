@@ -77,7 +77,7 @@ Date.prototype.unix = function(){
 };//function
 
 Date.prototype.between=function(min, max){
-	if (min==null) return null;	//NULL MEANS UNKNOWN, SO between() IS UNKNOWN
+	if (min==null) return null;  //NULL MEANS UNKNOWN, SO between() IS UNKNOWN
 	if (max==null) return null;
 
 	//UNDEFINED MEANS DO-NOT-CARE
@@ -197,8 +197,8 @@ Date.diffMonth=function(endTime, startTime){
 	var output=new Duration();
 	output.month=numMonths;
 	output.milli=endTime.getMilli()-startTime.addMonth(numMonths).getMilli()+(numMonths*Duration.MILLI_VALUES.month);
-//	if (output.milli>=Duration.MILLI_VALUES.day*31)
-//		Log.error("problem");
+//  if (output.milli>=Duration.MILLI_VALUES.day*31)
+//    Log.error("problem");
 	return output;
 };//method
 
@@ -274,7 +274,7 @@ Date.prototype.addWeek = function(value){
 };//method
 
 Date.prototype.addMonth = function(value){
-	if (value==0) return this;	//WHOA! SETTING MONTH IS CRAZY EXPENSIVE!!
+	if (value==0) return this;  //WHOA! SETTING MONTH IS CRAZY EXPENSIVE!!
 	var output = new Date(this);
 	output.setUTCMonth(this.getUTCMonth() + value);
 	return output;
@@ -876,4 +876,20 @@ Date.tryParse=function(val, isFutureDate){
 Date.EPOCH=Date.newInstance("1/1/1970");
 
 
+Date.range=function(min, max, interval){
+  if (min instanceof Object){
+    interval=min.interval;
+    max=min.max;
+    min=min.min;
+  }//endif
 
+  var output=[];
+  min=Date.newInstance(min);
+  max=Date.newInstance(max);
+  interval = Duration.newInstance(interval);
+  var acc=min;
+  for(;acc<max;acc=acc.add(interval)){
+    output.append(acc);
+  }//for
+  return output;
+};

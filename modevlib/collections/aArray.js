@@ -39,6 +39,11 @@ importScript("../util/aUtil.js");
 		return output;
 	};//method
 
+	Array.unwrap = function(value){
+		if (isArray(value)) return value.unwrap();
+		if (value==null) return null;
+		return value;
+	};//method
 
 	Array.prototype.unwrap = function(){
 		if (this.length==0) {
@@ -48,7 +53,7 @@ importScript("../util/aUtil.js");
 		}else{
 			return this;
 		}//endif
-	}//method
+	};//method
 
 
 	Array.prototype.copy = function(){
@@ -82,7 +87,7 @@ importScript("../util/aUtil.js");
 	Array.prototype.map=function(func){
 		var output=[];
 		for(var i=0;i<this.length;i++){
-			var v=func(this[i], i);
+			var v=func(this[i], i, this);
 			if (v===undefined || v==null) continue;
 			output.push(v);
 		}//for
@@ -120,16 +125,21 @@ importScript("../util/aUtil.js");
 	Array.prototype.select = function(attrName){
 		var output=[];
 		if (typeof(attrName)=="string"){
-			for(var i=0;i<this.length;i++)
-				output.push(this[i][attrName]);
+			if (attrName.indexOf(".")==-1){
+				for(var i=0;i<this.length;i++)
+					output.push(Map.get(this[i], attrName));
+			}else{
+				for(var i=0;i<this.length;i++)
+					output.push(Map.get(this[i], attrName));
+			}//endif
 		}else if (attrName instanceof Array){
 			//SELECT MANY VALUES INTO NEW OBJECT
 			for(var i=0;i<this.length;i++){
 				var v=this[i];
 				var o={};
-				for(var a=0;a<attrName.length;a++){
-					var n=attrName[a];
-					o[n]=v[n];
+				for (var a = 0; a < attrName.length; a++) {
+					var n = attrName[a];
+					Map.set(o, n, Map.get(v, n));
 				}//for
 				output.push(o);
 			}//for
@@ -215,12 +225,12 @@ importScript("../util/aUtil.js");
 		return this[0];
 	};//method
 
-//	Array.prototype.indexOf=function(value){
-//		for(var i=0;i<this.length;i++){
-//			if (this[i]==value) return i;
-//		}//for
-//		return -1;
-//	};//method
+//  Array.prototype.indexOf=function(value){
+//    for(var i=0;i<this.length;i++){
+//      if (this[i]==value) return i;
+//    }//for
+//    return -1;
+//  };//method
 
 	Array.prototype.substring=Array.prototype.slice;
 
@@ -291,9 +301,15 @@ importScript("../util/aUtil.js");
 	//ASSUMES THAT THE COORCED STRING VALUE IS UNIQUE
 	//EXPECTING ONE ARGUMENT, WHICH IS A LIST OF AN ARRAYS, EACH REPRESENTING A SET
 	Array.union = function union(){
-		var arrays = (arguments.length==1  && arguments[0] instanceof Array) ? arguments[0] : arguments;
+		var arrays = (arguments.length == 1 && arguments[0] instanceof Array) ? arguments[0] : arguments;
+		return Array.UNION(arrays);
+	};
 
-		var output={};
+	Array.UNION = function(arrays){
+		/*
+		 * EXPECTING A LIST OF ARRAYS TO union
+		 */
+		var output = {};
 		for (var j = arrays.length; j--;) {
 			var a = Array.newInstance(arrays[j]);
 			for (var i = a.length; i--;) {
@@ -337,7 +353,7 @@ importScript("../util/aUtil.js");
 
 	Array.prototype.subtract=function(b){
 		var c=[];
-	A:	for(var x=0;x<this.length;x++){
+	A:  for(var x=0;x<this.length;x++){
 		var v=this[x];
 			if (v!==undefined){
 				for(var y=b.length;y--;) if (v==b[y]) continue A;
@@ -347,3 +363,8 @@ importScript("../util/aUtil.js");
 		return c;
 	};//method
 })();
+
+
+function isArray(value){
+	return value instanceof Array;
+}

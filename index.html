@@ -129,7 +129,7 @@ importScript([
 			}//endif
 		}//endif
 
-		var populous = Qb.sort(all_steps, {"value": "count", "sort": -1});
+		var populous = qb.sort(all_steps, {"value": "count", "sort": -1});
 
 		//FIND STEP POSITION OF run-tests
 		var population = populous.map(function(v, i){
@@ -152,7 +152,7 @@ importScript([
 		});
 		populous=populous.slice(0, stop);
 
-		var steps = Qb.sort(populous, "order");
+		var steps = qb.sort(populous, "order");
 
 		Thread.run(function*(){
 			//PULL THE AVERAGE TIME FOR EACH STEP
@@ -196,7 +196,7 @@ importScript([
 				Log.actionDone(a);
 			}//try
 
-			step_timings.data = Qb.sort(step_timings.data, "order");
+			step_timings.data = qb.sort(step_timings.data, "order");
 
 			//FIND NUMBER OF run-tests
 			var num_tests = step_timings.data.map(function(v){

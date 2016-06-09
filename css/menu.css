@@ -4,14 +4,14 @@
     font-family: 'Open Sans';
     src: url('./OpenSans-Light-webfont.eot');
     src: url('./OpenSans-Light-webfont.eot?#iefix') format('embedded-opentype'), url('./OpenSans-Light-webfont.woff') format('woff'), url('./OpenSans-Light-webfont.ttf') format('truetype'), url('./OpenSans-Light-webfont.svgOpenSans-Light-webfont.svg#OpenSansBold') format('svg');
-    font-weight: 600
+    font-weight: normal
 }
 
 @font-face {
     font-family: 'Open Sans Bold';
     src: url('./OpenSans-Bold-webfont.eot');
     src: url('./OpenSans-Bold-webfont.eot?#iefix') format('embedded-opentype'), url('./OpenSans-Bold-webfont.woff') format('woff'), url('./OpenSans-Bold-webfont.ttf') format('truetype'), url('./OpenSans-Bold-webfont.svgOpenSans-Bold-webfont.svg#OpenSansBold') format('svg');
-    font-weight: 600
+    font-weight: bold
 }
 
 
@@ -136,6 +136,7 @@ body {
 h1 {
     font-family: 'Open Sans', sans-serif;
     font-size: 48px;
+    font-weight: normal;
   letter-spacing: -2px;
   line-height: 100%;
      margin-top: 0;
@@ -144,6 +145,7 @@ h1 {
 h2 {
     font-family: 'Open Sans', sans-serif;
     font-size: 32px;
+    font-weight: normal;
   letter-spacing: -1px;
   line-height: 100%;
      margin-top: 0;
@@ -523,8 +525,8 @@ SIDE BAR
 }
 
 .sidebar_name {
-    float:left;
-    height: 100%;
+    /*float:left;*/
+    /*height: 100%;*/
     width: 30px;
     background-color: #777777;
     position: relative;
@@ -536,11 +538,12 @@ SIDE BAR
 
 .sidebar_name div{
     position: absolute;
-    top: 50px;
-    /*left: -2px;*/
+    /*top: 50px;*/
+    right: 8px;
     height: 18px;
-    width: 100%;
+    /*width: 100%;*/
     transform: rotate(270deg);
+    transform-origin: bottom right;
     /*color: white;*/
     color: #dddddd;
 

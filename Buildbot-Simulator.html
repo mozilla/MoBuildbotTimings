@@ -1,0 +1,183 @@
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<HTML>
+<HEAD>
+    <script type="text/javascript" src="modevlib/imports/import.js"></script>
+    <link type="text/css" rel="stylesheet" href="css/menu.css"/>
+</HEAD>
+<BODY>
+
+
+<div id="sidebar" layout="tl=window.tl;bottom=footer.bottom;" style="width:0;overflow:hidden;">
+    <div id="description" style="padding-left:10px;">
+        <h3>About</h3>
+        Overview of BuildBot Job Timing and Waits<br><br>
+
+        <b>Request Block Size</b> - Jobs do not arrive randomly, rather in blocks, all in the same second.  The chart counts the number of occurrences for each block size.<br><br>
+        <b>Job Duration</b> - Jobs are grouped by how long they take (to the minute), counted, and charted.<br><br>
+        <b>Inter-Job Timing</b> - For each machine, measures the amount of time from the end of one job to the start of the next, when jobs are waiting. This provides us with an estimate of the unmeasured time between jobs.<br><br>
+        The bar charts with <i>NULL</i> on the right is representing a count of measures outside the domain. Hopefully, it will give you an idea of how long the tail is.
+    </div>
+    <hr>
+    <div id="last-updated" style="text-align: center;width:300px;"></div>
+    <hr>
+    <div id="filters" style="width:300px;" class="menu">
+    </div>
+    <div id="parameters">
+    </div>
+</div>
+<div id="sidebar_name" class="sidebar_name" layout="top=window.top;bottom=footer.top;left=sidebar.right;">
+    <div>Configuration</div>
+</div>
+<div class="content" layout="top=page.top;left=sidebar_name.right;" style="padding: 10px 10px 50px 10px;">
+    <h1 id="title">Buildbot Simulator</h1>
+    <div style="padding:10px 20px 10px 20px;">
+        <table><tbody><tr><td>
+            New Requests
+            <div id="new_requests" class="chart"></div>
+            Historical Active Machines
+            <div id="history_active_machines" class="chart"></div>
+            Historical Queue Size
+            <div id="history_queue_size" class="chart"></div>
+            Historical Wait Times (minutes)
+            <div id="history_wait_times" class="chart"></div>
+            Simulated Active Machines
+            <div id="simulated_active_machines" class="chart"></div>
+            <!--Simulated Sleeping Machines-->
+            <!--<div id="simulated_sleeping_machines" class="chart"></div>-->
+            Simulated Queue Size
+            <div id="simulated_queue_size" class="chart"></div>
+            Simulated Wait Times (minutes)
+            <div id="simulated_wait_times" class="chart"></div>
+        </td><td style="width:250px;">
+            <div>
+                Request Block Size<br>
+                <div id="block_size" class="chart"></div>
+            </div>
+            <div>
+                Job Duration<br>
+                <div id="durations" class="chart"></div>
+            </div>
+            <div>
+                Inter-Job Timing<br>
+                <div id="inter_job_timing" class="chart"></div>
+            </div>
+            <div>
+                Sleepy Machines
+                <div id="sleepy_machines"></div>
+            </div>
+        </td></tr></tbody></table>
+    </div>
+
+</div>
+<div id="footer" style="height:50px;text-align: center;padding: 5px 0 5px 0;background-color: #fff;z-index: 12;"
+     layout="bl=window.bl;br=window.br;">
+    Source at <a href="https://github.com/mozilla/MoBuildbotTimings">https://github.com/mozilla/MoBuildbotTimings</a><br>
+    Wiki <a href="https://wiki.mozilla.org/Auto-tools/Projects/DevelopmentMetrics">https://wiki.mozilla.org/Auto-tools/Projects/DevelopmentMetrics</a>
+</div>
+
+
+<script type="application/javascript">
+
+    importScript([
+        'modevlib/main.js',
+        'js/util.js',
+        'js/simulator.js',
+        'modevlib/layouts/layout.js',
+        'modevlib/charts/cccChart.js',
+        'modevlib/Dimension-Builds.js'
+    ], function () {
+        layoutAll();
+        sidebarSlider();
+
+        var thread;
+        var createChart = function () {
+            if (thread !== undefined)
+                thread.kill();
+            thread = Thread.run(__createChart());
+        };
+
+        var __createChart = function*() {
+            dynamicLayout();
+
+            var pool = GUI.state.pool;
+            var poolFilter = {"eq": {"run.machine.pool": pool}};
+
+            var date=Date.newInstance(GUI.state.date).add("8hour");
+            var timeRange={"min":date, "max":date.add("day"), "interval":"15minute"};
+
+            $("#title").html(new Template("Buildbot Simulator ({{pool|html}}, {{date|format('EE, NNN dd')}})").expand({"date":date, "pool":pool}));
+
+            //CLEAR ALL CHARTS
+            $("#history_active_machines").html("");
+            $("#history_queue_size").html("");
+            $("#history_wait_times").html("");
+            $("#simulated_active_machines").html("");
+            $("#simulated_queue_size").html("");
+            $("#simulated_sleeping_machines").html("");
+            $("#new_requests").html("");
+
+            $("#simulated_wait_times").html("");
+            $("#block_size").html("");
+            $("#durations").html("");
+            $("#inter_job_timing").html("");
+            $("#sleepy_machines").html("");
+
+            Thread.run(function*(){
+                var pair = yield(interJobEstimate(timeRange, poolFilter));
+                var data = pair[0];
+                var machineSleepTimes = pair[1];
+
+                var topSleepy=qb.reverse(machineSleepTimes).slice(0, 5);
+                topSleepy.forall(function(v){
+                    v.restart_time= aMath.round(v.restart_time/1000/60, {"digits":4});
+                });
+                var options = {"columns": [
+                    {"name":"Machine", "value":"machine"},
+                    {"name":"Restart Time (minutes)", "value":"restart_time"},
+                    {"name":"Start Time", "value":"start_time"}
+                ]};
+                $("#sleepy_machines").html(convert.List2HTMLTable(topSleepy, options));
+
+
+                simulate(data, machineSleepTimes, GUI.state.num, timeRange);
+            });
+            show_history(timeRange, poolFilter);
+            block_size(timeRange, poolFilter);
+
+        };
+
+        Thread.showWorking = function (numThread) {
+            var l = $(".loading");
+            l.show();
+        };//function
+
+        Thread.hideWorking = function () {
+            var l = $(".loading");
+            l.hide();
+        };//function
+
+        $(document).ready(function () {
+            GUI.setup(
+                createChart,
+                [
+                    {"id": "date", "name": "Date", "type": "date", "default": Date.today().subtract(Duration.DAY)},
+                    {"id": "pool", "name": "Pool", "type": "set", "default":"t-yosemite-r7"},
+                    {"id": "num", "name": "Num Machines", "type": "count", "default":"197"}
+                ],
+                [],
+                "",
+                false
+            );
+        });
+
+    });
+
+</script>
+
+
+</BODY>
+</HTML>
+

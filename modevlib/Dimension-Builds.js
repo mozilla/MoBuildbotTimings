@@ -17,7 +17,7 @@ Dimension.addEdges(false, Mozilla, [{
 				{"name": "PGO", "ordering": 1, "style": {"color": "#f9cb9c"}, "value": "pgo", "esfilter": {"term": {"build.type": "pgo"}}},
 				{"name": "Debug", "ordering": 2, "style": {"color": "#f6b26b"}, "value": "debug", "esfilter": {"term": {"build.type": "debug"}}},
 				{"name": "Leak Test", "ordering": 3, "style": {"color": "#f6b26b"}, "value": "leak test", "esfilter": {"term": {"build.type": "leak test"}}},
-				{"name": "static Analysis", "ordering": 4, "style": {"color": "#f6b26b"}, "value": "static analysis", "esfilter": {"term": {"build.type": "static analysis"}}},
+				{"name": "Static Analysis", "ordering": 4, "style": {"color": "#f6b26b"}, "value": "static analysis", "esfilter": {"term": {"build.type": "static analysis"}}},
 				{"name": "ASAN", "ordering": 5, "style": {"color": "#f6b26b"}, "value": "asan", "esfilter": {"term": {"build.type": "asan"}}},
 				{"name": "Standard", "value": null, "ordering": 0, "esfilter": {"missing": "build.type"}}
 			]

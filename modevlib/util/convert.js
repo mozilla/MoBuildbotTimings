@@ -196,6 +196,9 @@ var convert = function(){
 					var d = convert.hex2bytes(v.substring(i + 1, i + 3));
 					output += d;
 					i += 3;
+				} else if (c == "+"){
+					output += " ";
+					i += 1;
 				} else {
 					output += c;
 					i += 1;

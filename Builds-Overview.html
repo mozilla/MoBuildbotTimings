@@ -68,7 +68,8 @@ importScript([
 
 	var __createChart = function*(){
 		var beginPastWeek = Date.today().add("-week");
-		var beginPastMonth = Date.today().add("-2month");
+		var beginPastMonth = Date.newInstance(GUI.state.sampleMin);
+		var endPastMonth = Date.newInstance(GUI.state.sampleMax);
 		var totalsFilter = {"and":[
 			{"eq": {
 				"action.type": "build",
@@ -161,7 +162,7 @@ importScript([
 							"domain": {
 								"type": "time",
 								"min": beginPastMonth.unix(),
-								"max": "today",
+								"max": endPastMonth.unix(),
 								"interval": "day"
 							}
 						}
@@ -174,7 +175,8 @@ importScript([
 								{"missing": Mozilla.Builds.Type.field}
 							),
 							totalsFilter,
-							{"gt": {"action.start_time": beginPastMonth.unix()}}
+							{"gte": {"action.start_time": beginPastMonth.unix()}},
+							{"lt": {"action.end_time": endPastMonth.unix()}}
 						]
 					},
 					"limit": 1000
@@ -277,9 +279,10 @@ importScript([
 
 	$(document).ready(function(){
 		GUI.setup(createChart, [
+				{"id": "sampleMin", "name": "Start Date", "type": "time", "default": Date.today().add("-2month")},
+				{"id": "sampleMax", "name": "End Date", "type": "time", "default": Date.today()}
 			],
-			[
-			],
+			[],
 			"",
 			false
 		);

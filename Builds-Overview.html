@@ -26,7 +26,7 @@
 <div id="sidebar_name" class="sidebar_name" layout="top=window.top;bottom=footer.top;left=sidebar.right;">
 	<div>Configuration</div>
 </div>
-<div class="content" layout="top=page.top;left=sidebar_name.right;" style="padding: 10px 10px 50px 10px;">
+<div class="content" layout="tr=page.tr;left=sidebar_name.right;" style="padding: 10px 10px 50px 10px;">
 	<h1 id="title">Firefox Build Times</h1>
 	<span id="status" style="height:30px">Page Loading...</span><span class="loading"><img src="images/spinner.gif" alt=""></span>
 
@@ -40,9 +40,7 @@
 <div id="row_template" style="visibility:hidden;">
 	<div style="padding:10px 20px 10px 20px;">
 		<h4>{{TITLE}}</h4>
-
-		<div id="chartseries{{ROWNUM}}" class="chart" style="display: inline-block;"></div>
-		<div id="chart{{ROWNUM}}" class="chart" style="display: inline-block;"></div>
+		<div id="chartseries{{ROWNUM}}" class="chart" style="display: inline-block;"></div><div id="chart{{ROWNUM}}" class="chart" style="display: inline-block;"></div>
 	</div>
 </div>
 
@@ -250,11 +248,10 @@ importScript([
 							"sampleMin": Date.newInstance(date).floorDay().add("-2day").format("yyyy-MM-dd"),
 							"sampleMax": Date.newInstance(date).floorDay().add("3day").format("yyyy-MM-dd"),
 							"product": "Firefox",
-							"type": type,
+							"type": type.name,
 							"platform": platformDomain.getPartByKey(platform).name.replaceAll(" ", "_")
 						};
 						window.open("Builds-Detail.html#" + convert.Object2URL(param));
-
 					}
 				});
 

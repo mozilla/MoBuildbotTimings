@@ -1,19 +1,19 @@
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
-   - License, v. 2.0. If a copy of the MPL was not distributed with this
-   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
-<HTML>
+<!DOCTYPE html>
+<HTML lang="en">
 <HEAD>
+	<title>End to End Times</title>
 	<script type="text/javascript" src="modevlib/imports/import.js"></script>
     <link type="text/css" rel="stylesheet" href="css/menu.css"/>
 </HEAD>
 <BODY>
+<!--Click on series to get scatter plot of all times-->
+<!--Click on point to get TH and logs-->
 
 
 <div id="sidebar" layout="tl=window.tl;bottom=footer.bottom;" style="width:0;overflow:hidden;">
 	<div id="description" style="padding-left:10px;">
 		<h3>About</h3>
-		An overview of current build times.  Click on a chart of a timeseries view.
+		Show the longest build/test times.  All times showing the 90th percentile, the aggregate is a synthetic sum.
 	</div>
 	<hr>
 	<div id="last-updated" style="text-align: center;width:300px;"></div>
@@ -27,7 +27,7 @@
 	<div>Configuration</div>
 </div>
 <div class="content" layout="tr=page.tr;left=sidebar_name.right;" style="padding: 10px 10px 50px 10px;">
-	<h1 id="title">Firefox Build Times</h1>
+	<h1 id="title">Longest End-to-End Times</h1>
 	<span id="status" style="height:30px">Page Loading...</span><span class="loading"><img src="images/spinner.gif" alt=""></span>
 
 	<div id="chart_area">Please Wait</div>
@@ -45,7 +45,6 @@
 </div>
 
 
-
 <script type="application/javascript">
 
 
@@ -56,6 +55,8 @@ importScript([
 	'modevlib/charts/cccChart.js',
 	'modevlib/Dimension-Builds.js'
 ], function(){
+	var NUM_TESTS = 5;
+
 	layoutAll();
 	sidebarSlider();
 
@@ -70,56 +71,142 @@ importScript([
 		var beginPastWeek = Date.today().add("-week");
 		var beginPastMonth = Date.newInstance(GUI.state.sampleMin);
 		var endPastMonth = Date.newInstance(GUI.state.sampleMax);
-		var totalsFilter = {"and":[
+		var mainFilter = {"and":[
 			{"eq": {
-				"action.type": "build",
 				"build.product": "firefox",
 				"action.buildbot_status":"success"
 			}},
-			{"not":{"terms":{"build.branch":["mozilla-aurora", "mozilla-beta"]}}}
+			{"or":[
+				{"missing":"build.type"},
+				{"in": {"build.type":["opt", "debug"]}}
+			]},
+			{"in":{"build.branch":["mozilla-inbound", "try"]}}
 		]};
 
-		//SUMMARY OF BUILD TIMES SINCE minDate
-		var a=Log.action("Get summary", true);
+		<!--Split by build type (std, debug, opt) over (try and inbound)-->
+		<!--Show with/without wait times-->
+		<!--List top 5 longest run tests (dropdown for more?)-->
 
-		var query = {
-			"from": "jobs",
-			"select": {
-				"name": "average",
-				"value": {"div": {"action.duration": 60}, "default": 0},
-				"aggregate": "average",
-				"default": 0
-			},
-			"edges": [
-				{
-					"name": "Type",
-					"value": Mozilla.Builds.Type.field
+		<!--Click to show timeline for that category of test, including all steps-->
+	    <!--(highlight step when hovering)-->
+
+		// GRAB ALL BUILD TIMES FROM THE PAST WEEK
+		//
+
+
+		//SUMMARY OF BUILD TIMES SINCE minDate
+		var build_averages = null;
+		var test_averages = null;
+
+		var build_thread = Thread.run("build times", function*(){
+			var a=Log.action("Get build times", true);
+
+			var query = {
+				"from": "jobs",
+				"select": {
+					"name": "90_percentile",
+					"value": {"div": {"action.duration": 60}, "default": 0},
+					"aggregate": "percentile",
+					"percentile": 0.9
 				},
-				{
-					"name": "Platform",
-					"value": Mozilla.Builds.Platform.field,
-					"allowNulls":false,
-					"domain": {
-						"type": "set",
-						"partitions": Mozilla.Builds.Platform.partitions.select("value")
+				"edges": [
+					{
+						"name": "Type",
+						"value": Mozilla.Builds.Type.field
+					},
+					{
+						"name": "Platform",
+						"value": Mozilla.Builds.Platform.field,
+						"allowNulls":false,
+						"domain": {
+							"type": "set",
+							"partitions": Mozilla.Builds.Platform.partitions.select("value")
+						}
 					}
-				}
-			],
-			"where": {
-				"and": [
-					totalsFilter,
-					{"gt": {"action.start_time": beginPastWeek.unix()}}
-				]
-			},
-			"limit": 1000
-		};
-		try {
-			var averages = yield (search(query));
-		}catch (e){
-			Log.error("problem with call to ActiveData", e)
-		}finally{
-			Log.actionDone(a);
-		}//try
+				],
+				"where": {
+					"and": [
+						{"eq": {"action.type": "build"}},
+						mainFilter,
+						{"gt": {"action.start_time": beginPastWeek.unix()}}
+					]
+				},
+				"limit": 1000
+			};
+
+			try {
+				build_averages = yield (search(query));
+			}catch (e){
+				Log.error("problem with call to ActiveData", e)
+			}finally{
+				Log.actionDone(a);
+			}//try
+		});
+
+
+		var tests_thread = Thread.run("test times", function*(){
+			var a=Log.action("Get test times", true);
+
+			var query = {
+				"from": "jobs",
+				"select": {
+					"name": "90_percentile",
+					"value": {"div": {"action.duration": 60}, "default": 0},
+					"aggregate": "percentile",
+					"percentile": 0.9
+				},
+				"edges": [
+					{
+						"name": "Type",
+						"value": Mozilla.Builds.Type.field
+					},
+					{
+						"name": "Platform",
+						"value": Mozilla.Builds.Platform.field,
+						"allowNulls":false,
+						"domain": {
+							"type": "set",
+							"partitions": Mozilla.Builds.Platform.partitions.select("value")
+						}
+					},
+					{
+						"name":"suite",
+						"value":"run.suite"
+					}
+				],
+				"where": {
+					"and": [
+						{"eq": {"action.type": "test"}},
+						mainFilter,
+						{"gt": {"action.start_time": beginPastWeek.unix()}}
+					]
+				},
+				"limit": 1000
+			};
+
+			try {
+				test_averages = yield (search(query));
+			}catch (e){
+				Log.error("problem with call to ActiveData", e)
+			}finally{
+				Log.actionDone(a);
+			}//try
+		});
+
+		Thread.join(build_thread);
+		Thread.join(tests_thread);
+
+		//MATCH BUILDS TO TESTS
+		var test_timings = new Matrix({"data":test_averages.data});
+		var build_timings = new Matrix({"data":build_averages.data});
+		build_timings.forall(function(v, c, data){
+			//GET ALL TESTS, SORT BY DURATION
+			v.tests = qb.limit(qb.sort(test_averages.edges[2].domain.partitions.map(function(part, i){
+				var tc = [c[0], c[1], i];
+				return {"name":part.name, "duration":test_timings.get(tc)};
+			}), {"value":"duration", "sort":-1}), NUM_TESTS);
+		});
+		
 
 		//BUILD THE TEMPLATE
 		var row_template=new Template($("#row_template").html());
@@ -174,7 +261,7 @@ importScript([
 								{"eq": Map.newInstance(Mozilla.Builds.Type.field, type.value)} :
 								{"missing": Mozilla.Builds.Type.field}
 							),
-							totalsFilter,
+							mainFilter,
 							{"gte": {"action.start_time": beginPastMonth.unix()}},
 							{"lt": {"action.end_time": endPastMonth.unix()}}
 						]
@@ -276,6 +363,14 @@ importScript([
 		var l = $(".loading");
 		l.hide();
 	};//function
+
+	var overallTemplate=[
+		'<tr><td>{{Platform}} {{Type}}</td><td><table>',
+		{"from":"tests", "template":[
+			'<tr><td><div style="width:{{duration}}px">{{name}} ({{duration|format("mm:ss")}})</div></td></tr>'
+		]},
+		'</table></td></tr>'
+	];
 
 	$(document).ready(function(){
 		GUI.setup(createChart, [

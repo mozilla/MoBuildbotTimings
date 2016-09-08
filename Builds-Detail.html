@@ -143,7 +143,7 @@ importScript([
 		try {
 			var count = yield (search(query));
 		}catch (e){
-			Log.error("problem with call to ACtiveData", e)
+			Log.error("problem with call to ActiveData", e)
 		}finally{
 			Log.actionDone(a);
 		}//try
@@ -155,7 +155,7 @@ importScript([
 				"select":[
 					{"name":"start", "value":"action.start_time"},
 					{"name":"status", "value":"action.buildbot_status"},
-					{"name": "duration", "value": {"div": {"action.duration": 60}, "default": 0}},
+					{"name":"duration", "value": {"div": {"action.duration": 60}, "default": 0}},
 					{"name":"branch", "value":"build.branch"},
 					{"name":"revision", "value":"build.revision"},
 					{"name":"pool", "value":"run.machine.pool"}
@@ -252,9 +252,10 @@ importScript([
 			}//try
 
 			var action = details.data[0].action;
-			var timings = qb.sort(action.timings, "order");
-			action.timings = timings;
-
+			if (action.timings!==undefined){
+				var timings = qb.sort(action.timings, "order");
+				action.timings = timings;
+			}//endif
 			if (Thread.currentThread===detailThread) {
 				//ONLY UPDATE IF THIS IS STILL THE LAST ONE CLICKED
 				details.data.forall(function(d){d.action.timings=undefined;});

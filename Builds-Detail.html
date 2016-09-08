@@ -37,7 +37,7 @@
 		<div id="chart_area" class="chart" style="width:800px;height:300px;">Please Wait</div>
 		<div id="details"></div>
 		<div id="timeline" style="width:800px;height:200px;"></div>
-		<div id="raw_activedata"></div>
+		<div id="raw_ActiveData"></div>
 
 	</div>
 </div>
@@ -143,7 +143,7 @@ importScript([
 		try {
 			var count = yield (search(query));
 		}catch (e){
-			Log.error("problem with call to ACtiveData", e)
+			Log.error("problem with call to ActiveData", e)
 		}finally{
 			Log.actionDone(a);
 		}//try
@@ -155,7 +155,7 @@ importScript([
 				"select":[
 					{"name":"start", "value":"action.start_time"},
 					{"name":"status", "value":"action.buildbot_status"},
-					{"name": "duration", "value": {"div": {"action.duration": 60}, "default": 0}},
+					{"name":"duration", "value": {"div": {"action.duration": 60}, "default": 0}},
 					{"name":"branch", "value":"build.branch"},
 					{"name":"revision", "value":"build.revision"},
 					{"name":"pool", "value":"run.machine.pool"}
@@ -229,7 +229,7 @@ importScript([
 		layoutAll();
 
 		detailThread = Thread.run(function*(){
-			$("#raw_activedata").html("");
+			$("#raw_ActiveData").html("");
 			$("#timeline").html("");
 
 			var a = Log.action("get timings", true);
@@ -252,13 +252,14 @@ importScript([
 			}//try
 
 			var action = details.data[0].action;
-			var timings = qb.sort(action.timings, "order");
-			action.timings = timings;
-
+			if (action.timings!==undefined){
+				var timings = qb.sort(action.timings, "order");
+				action.timings = timings;
+			}//endif
 			if (Thread.currentThread===detailThread) {
 				//ONLY UPDATE IF THIS IS STILL THE LAST ONE CLICKED
 				details.data.forall(function(d){d.action.timings=undefined;});
-				$("#raw_activedata").html(RECORD.expand({"json": convert.String2HTML(convert.value2json(Array.unwrap(details.data)))}));
+				$("#raw_ActiveData").html(RECORD.expand({"json": convert.String2HTML(convert.value2json(Array.unwrap(details.data)))}));
 				showTimeline(action, timings);
 			}//endif
 		});

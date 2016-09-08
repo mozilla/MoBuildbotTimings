@@ -37,7 +37,7 @@
 		<div id="chart_area" class="chart" style="width:800px;height:300px;">Please Wait</div>
 		<div id="details"></div>
 		<div id="timeline" style="width:800px;height:200px;"></div>
-		<div id="raw_ActiveData"></div>
+		<div id="raw_activedata"></div>
 
 	</div>
 </div>
@@ -229,7 +229,7 @@ importScript([
 		layoutAll();
 
 		detailThread = Thread.run(function*(){
-			$("#raw_ActiveData").html("");
+			$("#raw_activedata").html("");
 			$("#timeline").html("");
 
 			var a = Log.action("get timings", true);
@@ -259,7 +259,7 @@ importScript([
 			if (Thread.currentThread===detailThread) {
 				//ONLY UPDATE IF THIS IS STILL THE LAST ONE CLICKED
 				details.data.forall(function(d){d.action.timings=undefined;});
-				$("#raw_ActiveData").html(RECORD.expand({"json": convert.String2HTML(convert.value2json(Array.unwrap(details.data)))}));
+				$("#raw_activedata").html(RECORD.expand({"json": convert.String2HTML(convert.value2json(Array.unwrap(details.data)))}));
 				showTimeline(action, timings);
 			}//endif
 		});

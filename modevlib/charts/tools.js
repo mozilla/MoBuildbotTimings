@@ -20,6 +20,19 @@ importScript("../collections/aArray.js");
 		}
 	});
 
+	//style() NO LONGER ACCEPTS OBJECTS
+	var style = d3.selection.prototype.style;
+	proto.style = function(){
+		if (arguments.length==1 && !isString(arguments[0])){
+			var self=this;
+			Map.forall(arguments[0], function(key, value){
+				self=style.apply(self, [key, value]);
+			});//forall
+			return self;
+		}//endif
+		return style.apply(this, arguments);
+	};
+
 	//TRANSFORMS COULD BE DONE EASIER TOO
 	function transform(){
 		return (function(self, name, params){

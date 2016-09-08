@@ -72,7 +72,7 @@ function showTimeline(action, timings){
 	var HEIGHT = 30;
 	var LINE_PADDING = 10;
 
-	var xScale = d3.scale.linear().domain([action.start_time, action.end_time]).range([20, width - 50]);
+	var xScale = d3.scaleLinear().domain([action.start_time, action.end_time]).range([20, width - 50]);
 
 	function start(d){
 		return xScale(coalesce(Map.get(d, "harness.start_time"), Map.get(d, "builder.start_time")));

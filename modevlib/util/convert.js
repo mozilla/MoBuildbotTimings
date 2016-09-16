@@ -268,7 +268,7 @@ var convert = function(){
 							return k.escape(urlMap) + "=" + value2json(vv).escape(urlMap);
 						}//endif
 					}).join("&");
-				} else if (Map.isObject(v)) {
+				} else if (Map.isMap(v)) {
 					return k.escape(urlMap) + "=" + value2json(v).escape(urlMap);
 				} else {
 					return k.escape(urlMap) + "=" + ("" + v).escape(urlMap);

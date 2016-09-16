@@ -22,7 +22,9 @@ var Template = function Template(template){
 		}//endif
 
 		function lower(v){
-			if (typeof(v) == "object" && !(v instanceof Array) && !(v instanceof Date) && !(v instanceof Duration)) {
+			if (v==null) {
+				return v;
+			}else if (typeof(v) == "object" && !(v instanceof Array) && !(v instanceof Date) && !(v instanceof Duration)) {
 				var newMap = {};
 				Map.forall(v, function(k, v){
 					newMap[k.toLowerCase()] = lower(v);
@@ -103,7 +105,7 @@ var Template = function Template(template){
 		} else if (template.from) {
 			return _expand_loop(template, namespaces);
 		} else {
-			Log.error("Not recognized {{template}}", {"template": template})
+			Log.error("Not recognized {{template|json}}", {"template": template})
 		}//endif
 	}
 

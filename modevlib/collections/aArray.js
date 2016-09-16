@@ -84,17 +84,6 @@ importScript("../util/aUtil.js");
 		this.splice(index, 0, value);
 	};//method
 
-	Array.prototype.map=function(func){
-		var output=[];
-		for(var i=0;i<this.length;i++){
-			var v=func(this[i], i, this);
-			if (v===undefined || v==null) continue;
-			output.push(v);
-		}//for
-		return output;
-	};//method
-
-
 	// func IS EXPECTED TO TAKE (group, values) WHERE
 	//     group IS THE GROUP VALUE (OR OBJECT)
 	//     values IS THE LIST IN THAT GROUP
@@ -166,11 +155,7 @@ importScript("../util/aUtil.js");
 	//WE ASSUME func ACCEPTS (row, i, rows)
 	Array.prototype.filter=function(func){
 
-		if (typeof(func) == "function") {
-			//DO NOTHING
-		}else{
-			func = convert.esFilter2function(func)
-		}//endif
+		if (typeof(func) != "function") func = qb.get(func);
 
 		var output=[];
 		for(var i=0;i<this.length;i++){
@@ -187,6 +172,10 @@ importScript("../util/aUtil.js");
 		temp.sort(function(a, b){return a.key-b.key;});
 		return temp.substring(0, num).map(function(v){return v.value;});
 	};
+
+	Array.prototype.orderBy=function(sort){
+		return qb.sort(this, sort);
+	};//method
 
 	Array.prototype.append=function(v){
 		this.push(v);
@@ -263,7 +252,6 @@ importScript("../util/aUtil.js");
 			this.splice(i, 1);
 		}//while
 	};
-
 
 	Array.prototype.concatenate=function(separator){
 		return this.map(function(v){return v;}).join(separator);

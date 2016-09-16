@@ -1,31 +1,25 @@
 function qb2function(expr){
-	if (expr == null) return function(){
+	if (expr == null) {
 		return function(){
 			return null;
 		}
 	};
-	if (expr === true) return function(){
+	if (expr === true) {
 		return function(){
 			return true;
 		}
 	};
-	if (expr === false) return function(){
+	if (expr === false) {
 		return function(){
 			return false;
 		}
 	};
 	if (isString(expr) && MVEL.isKeyword(expr)) {
-		if (expr.indexOf("." == -1)) {
-			return function(value){
-				return value[expr];
-			}
-		} else {
-			return function(value){
-				return Map.get(value, expr);
-			}
-		}//endif
+		return function(value){
+			return Map.get(value, expr);
+		}
 	}//endif
-	if (typeof(expr)=="number"){
+	if (aMath.isNumeric(expr)){
 		return function(){
 			return expr;
 		};//endif
@@ -58,6 +52,21 @@ expressions.when = function(expr){
 		};
 };
 
+expressions.sub = function(expr){
+	if (isArray(expr.sub)) {
+		var exprs = expr.sub.map(qb2function);
+		return function(value){
+			return exprs[0](value) - exprs[1](value);
+		};
+	} else {
+		var k = Map.keys(expr.sub)[0];
+		var kk = qb2function(k);
+		var vv = qb2function(expr.gt[k]);
+		return function(value){
+			return kk(value) > vv(value);
+		};//function
+	}//endif
+};
 
 expressions.eq = function (expr) {
 	if (isArray(expr.eq)) {
@@ -112,11 +121,35 @@ expressions.case = function(expr){
 
 
 expressions.missing = function(expr){
-	var missing = qb2function(expr.missing);
+	var test = qb2function(expr.missing);
 
 	return function(value){
-		return missing(value) == null;
+		return test(value) == null;
 	}
 };
 
 
+expressions.exists = function(expr){
+	var test = qb2function(expr.exists);
+
+	return function(value){
+		return test(value) != null;
+	}
+};
+
+
+expressions.gt = function(expr){
+	if (isArray(expr.gt)) {
+		var exprs = expr.gt.map(qb2function);
+		return function(value){
+			return exprs[0](value) > exprs[1](value);
+		};
+	} else {
+		var k = Map.keys(expr.gt)[0];
+		var kk = qb2function(k);
+		var vv = qb2function(expr.gt[k]);
+		return function(value){
+			return kk(value) > vv(value);
+		};//function
+	}//endif
+};

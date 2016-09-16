@@ -1,5 +1,6 @@
-var layoutAll;       //INITIAL LAYOUT
-var dynamicLayout;   //SUBSEQUENT LAYOUT WHEN DOM CHANGES
+var layoutAll;        //INITIAL LAYOUT
+var dynamicLayout;    //SUBSEQUENT LAYOUT WHEN DOM CHANGES
+var onDynamicLayout;  //CALL THIS WITH A FUNCTION THAT WILL BE CALLED AFTER EACH LAYOUT
 
 (function(){
 	var DELAY_JAVASCRIPT = 200;
@@ -7,6 +8,7 @@ var dynamicLayout;   //SUBSEQUENT LAYOUT WHEN DOM CHANGES
 
 	var allExpression = undefined;
 	var mapSelf2DynamicFormula = undefined;
+	var postLayoutFunctions=[];
 
 	layoutAll = function layout_all(){
 		allExpression = [];
@@ -248,6 +250,12 @@ var dynamicLayout;   //SUBSEQUENT LAYOUT WHEN DOM CHANGES
 		}//endif
 
 		eval("dynamicLayout=" + layoutFunction);
+		postLayoutFunctions.push(dynamicLayout);
+		dynamicLayout = function(){
+			forall(postLayoutFunctions, function(f){
+				f();
+			});
+		};
 		dynamicLayout();
 		dynamicLayout = debounce(dynamicLayout, DELAY_JAVASCRIPT);
 		window.onresize = dynamicLayout;
@@ -578,5 +586,10 @@ var dynamicLayout;   //SUBSEQUENT LAYOUT WHEN DOM CHANGES
 		});
 		return Object.keys(res);
 	}//function
+
+
+	onDynamicLayout=function(func){
+		postLayoutFunctions.push(func);
+	};//function
 
 })();

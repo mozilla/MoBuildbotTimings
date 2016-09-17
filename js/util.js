@@ -26,7 +26,9 @@ var search = function*(query){
 	query.from=source.table;
 
 	var output = yield (Rest.post({
-		url: source.host+"/query",
+
+		//url: source.host+"/query",
+		url: "http://localhost:5000/query",
 		json: query
 	}));
 
@@ -96,88 +98,88 @@ function showTimeline(action, timings){
 
 
 	var svg = d3.select("#timeline")
-			.html(
-					new Template('<h3 style="padding-top:10px;display: inline-block;">Timeline</h3> ({{duration|round(3)}} minutes)<br>')
-							.expand({"duration": action.duration/60})
-			)
-			.append("svg")
-			.width(width)
-			.height(200)
-			;
+		.html(
+			new Template('<h3 style="padding-top:10px;display: inline-block;">Timeline</h3> ({{duration|round(3)}} minutes)<br>')
+				.expand({"duration": action.duration / 60})
+		)
+		.append("svg")
+		.width(width)
+		.height(200)
+		;
 
 
 	var e = svg.selectAll("rect").data(timings).enter();
 
 	e.append("rect") //SHOW BAR
-			.x(start)
-			.y(yLine)
-			.width(duration)
-			.height(HEIGHT)
-			.fill(function(d, i){
-				return colors[i % colors.length];
-			})
+		.x(start)
+		.y(yLine)
+		.width(duration)
+		.height(HEIGHT)
+		.fill(function(d, i){
+			return colors[i % colors.length];
+		})
 	;
 
 	e.append("rect")  //SHOW TIME MARKERS
-			.x(function(d){
-				return start(d) - 0.5;
-			})
-			.y(function(d){
-				return yLine(d) - 5;
-			})
-			.width(1)
-			.height(HEIGHT + 10)
-			.fill("black")
+		.x(function(d){
+			return start(d) - 0.5;
+		})
+		.y(function(d){
+			return yLine(d) - 5;
+		})
+		.width(1)
+		.height(HEIGHT + 10)
+		.fill("black")
 	;
 	e.append("svg")  //SHOW NAME OF EACH STEP (CLIP TO svg)
-			.x(function(d){
-				return start(d) + BORDER
-			})
-			.y(function(d){
-				return yLine(d) + BORDER
-			})
-			.width(function(d){
-				return Math.max(0, duration(d) - BORDER - BORDER)
-			})
-			.height(HEIGHT - BORDER - BORDER)
-			.append("text")
-			.text(function(d){
-				return coalesce(Map.get(d, "harness.step"), d.builder.step);
-			})
-			.y(HEIGHT - (BORDER * 3))
-			.fill('black')
+		.x(function(d){
+			return start(d) + BORDER
+		})
+		.y(function(d){
+			return yLine(d) + BORDER
+		})
+		.width(function(d){
+			return Math.max(0, duration(d) - BORDER - BORDER)
+		})
+		.height(HEIGHT - BORDER - BORDER)
+		.append("text")
+		.text(function(d){
+			return coalesce(Map.get(d, "harness.step"), d.builder.step);
+		})
+		.y(HEIGHT - (BORDER * 3))
+		.fill('black')
 	;
 
 	e.append("g")  //SHOW START TIMES FOR EACH STEP
-			.translate(5, -15)
-			.rotate(45)
-			.translate(
-					function(d){
-						return start(d) + BORDER
-					},
-					function(d){
-						return yLine(d) + HEIGHT + BORDER
-					}
-			)
-			.append("text")
-			.text(function(d){
-				if (duration(d) < 20 || level(d) == 0) return "";
-				var s = coalesce(Map.get(d, "harness.start_time"), Map.get(d, "builder.start_time"));
-				return Duration.newInstance(1000 * (s - action.start_time)).format("HH:mm:ss");
-			})
-			.y(HEIGHT - (BORDER * 3))
-			.fill('black')
+		.translate(5, -15)
+		.rotate(45)
+		.translate(
+			function(d){
+				return start(d) + BORDER
+			},
+			function(d){
+				return yLine(d) + HEIGHT + BORDER
+			}
+		)
+		.append("text")
+		.text(function(d){
+			if (duration(d) < 20 || level(d) == 0) return "";
+			var s = coalesce(Map.get(d, "harness.start_time"), Map.get(d, "builder.start_time"));
+			return Duration.newInstance(1000 * (s - action.start_time)).format("HH:mm:ss");
+		})
+		.y(HEIGHT - (BORDER * 3))
+		.fill('black')
 	;
 
 	(function(d){
 		svg.append("g")  //SHOW end_time
-				.translate(5, -15)
-				.rotate(45)
-				.translate(end(d) + BORDER, LINE_PADDING + HEIGHT + LINE_PADDING + HEIGHT + BORDER)
-				.append("text")
-				.text(Duration.newInstance(1000 * (action.end_time - action.start_time)).format("HH:mm:ss"))
-				.y(HEIGHT - (BORDER * 3))
-				.fill('black')
+			.translate(5, -15)
+			.rotate(45)
+			.translate(end(d) + BORDER, LINE_PADDING + HEIGHT + LINE_PADDING + HEIGHT + BORDER)
+			.append("text")
+			.text(Duration.newInstance(1000 * (action.end_time - action.start_time)).format("HH:mm:ss"))
+			.y(HEIGHT - (BORDER * 3))
+			.fill('black')
 		;
 
 
@@ -185,13 +187,10 @@ function showTimeline(action, timings){
 
 
 	e.append("rect")//INVISIBLE HOVER CATCHERS (IDENTICAL TO BAR SEGMENTS)
-			.x(start)
-			.y(yLine)
-			.width(duration)
-			.height(HEIGHT)
-			.fill("transparent")
-			.on("mouseover", function(d){
-				return timelineTip
+		.x(start)
+		.y(yLine)
+		.width(duration)		.on("mouseover", function(d){
+					return timelineTip
 						.style({
 							"top": (d3.event.pageY + 10) + "px",
 							"left": (d3.event.pageX + 10) + "px",
@@ -202,19 +201,23 @@ function showTimeline(action, timings){
 							"duration": Duration.newInstance(1000 * coalesce(Map.get(d, "harness.duration"), Map.get(d, "builder.duration")))
 						}))
 						;
-			})
-			.on("mousemove", function(d){
-				return timelineTip.style({
-					"top": (d3.event.pageY + 10) + "px",
-					"left": (d3.event.pageX + 10) + "px"
-				});
-			})
-			.on("mouseout", function(d){
-				return timelineTip.style("visibility", "hidden");
-			})
+				})
+				.on("mousemove", function(d){
+					return timelineTip.style({
+						"top": (d3.event.pageY + 10) + "px",
+						"left": (d3.event.pageX + 10) + "px"
+					});
+				})
+				.on("mouseout", function(d){
+					return timelineTip.style("visibility", "hidden");
+				})
+
+		.height(HEIGHT)
+		.fill("transparent")
 	;
 
 }//showTimeline
+
 
 
 var timelineTip = d3.select("body").append("div")
@@ -230,5 +233,22 @@ var timelineTip = d3.select("body").append("div")
 	})
 	.html("")
 	;
+
+
+/**
+ * GIVEN A SERIES OF ACCESSORS, AND ASSUMING THEY WILL RESULT IN ARRAYS OF VALUES
+ * (BECAUSE THE PATHS MAY BE NESTED), RETURN THE coalesce LIST-WISE
+ * Python: zip(coalesce(*zip(*temp)))
+ * @param obj - STRUCTURE TO NAVIGATE
+ * @param accessors - PATHS, DO NOT GO MORE THAN ONE NESTING DEEP
+ * @returns {Array}
+ */
+function coalesceAll(obj, accessors){
+	var temp = accessors.map(function(acc, i){
+		return Array.newInstance(Map.get(obj, acc));
+	});
+
+	return ZIP(ZIP(temp).map(COALESCE))[0];
+}//function
 
 

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+    <script type="text/javascript" src="modevlib/imports/import.js"></script>
+	<title>Title</title>
+</head>
+<body>
+
+
+<script>
+importScript([
+    "modevlib/charts/tools.js"
+], function(){
+    var data=[{"x": 1, "y": 1, "dx": 2, "dy": 2}];
+    var d3Area = d3.select("body");
+    var svg = d3Area
+            .html("")
+            .append("svg")
+            .width(500)
+            .height(500)
+    ;
+    var e = svg
+        .selectAll("rect")
+        .data(data)
+        .enter()
+        ;
+
+    var scale = d3.scaleLinear().domain([0, 5]).range([0, 100]);
+
+    var update = e.append("rect").defer()
+        .x(function(d){
+            return scale(d.x);
+        })
+        .y(function(d){
+            return scale(d.y);
+        })
+        .width(function(d){
+            return scale(d.dx);
+        })
+        .height(function(d){
+            return scale(d.dy);
+        })
+        .fill("green")
+    ;
+
+    update();
+
+    setTimeout(function(){
+        scale.range([0, 200]);
+        update.transition();
+    }, 2000);
+
+});
+
+</script>
+</body>
+</html>

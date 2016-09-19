@@ -144,7 +144,7 @@
 					"type": "string"
 				},
 				"area": {
-					"description": "in the event this charts has multiple draw areas, this is the name of area this series will show in",
+					"description": "in the event this chart has multiple draw areas, this is the name of area this series will show in",
 					"type": "string"
 				},
 				"type": {
@@ -223,7 +223,7 @@
 			"type": "object",
 			"properties": {
 				"position": {
-					"description": "where to place the axis, relative to plot area (top/right/bottom/left)",
+					"description": "where to place the axis, relative to plot area (top/right/bottom/left), default=bottom",
 					"type": "string"
 				},
 				"rug": {
@@ -317,7 +317,7 @@
 						"type": "string"
 					},
 					"id": {
-						"description": "id for programatic reference",
+						"description": "id for programmatic reference",
 						"type": "string"
 					},
 					"min": {
@@ -390,10 +390,15 @@
 		"object_style": {
 			"type": "object",
 			"properties": {
-				"$ref":"#definitions.style.properties",
 				"line": {
 					"$ref": "#definitions.style"
-				}
+				},
+				"bar-spacing": {
+					"description": "spacing between bars, either as pixels, or a percent of bar width.",
+					"type": "string",
+					"default": "10%"
+				},
+				"$ref":"#definitions.style.properties"
 			}
 		},
 		"style": {

@@ -6,6 +6,8 @@ importScript("../../lib/d3/d3.js");
 importScript("../collections/aArray.js");
 
 (function(){ //BETTER D3
+	var DEBUG = true;
+
 
 	//SOME ATTRIBUTES THAT CAN BE FUNCTIONS BY SAME NAME
 	[d3.selection.prototype, d3.transition.prototype].forall(function(proto){
@@ -53,14 +55,41 @@ importScript("../collections/aArray.js");
 			}
 		});
 
+		/**
+		 * SET VISIBILITY TO none IF DATA DOES NOT EXIST
+		 * @param func
+		 * @returns {*}
+       */
+		proto.exists = function(func){
+			try {
+				return proto.attr.apply(
+					this,
+					[
+						"visibility",
+						function(d){
+							try {
+								var exists = func(d);
+								if (exists == null || exists === false) {
+									return "none";
+								} else {
+									return "visible";
+								}//endif
+							} catch (e) {
+								return "none";
+							}
+						}
+					]
+				);
+			}catch(e){
+				return this;
+			}
+		}
+
 
 	});
 
 
-	var prototype = function(){};
-
 	var Deferral = function(selection){
-		var self = {};
 		var func = function(){
 			var sel = func.selection;
 			func.accumulator.forall(function(action){
@@ -68,27 +97,32 @@ importScript("../collections/aArray.js");
 			});
 		};
 		func.selection = selection;
+		func.current = selection;
 		func.accumulator = [];
-		func.__proto__ = prototype;
+		func.__proto__ = deferralPrototype;
 		return func;
 	};
 
-	["cx", "cy", "x", "y", "width", "height", "fill", "visibility", "style", "attr", "translate", "rotate", "append", "text"]
+	var deferralPrototype = function(){};
+
+	["cx", "cy", "x", "y", "width", "height", "fill", "visibility", "style", "attr", "translate", "rotate", "append", "text", "exists", "html"]
 		.forall(function(attr){
-			prototype[attr]=function(){
+			deferralPrototype[attr]=function(){
+				if (DEBUG){
+					this.current = this.current[attr].apply(this.current, arguments);
+				}
 				this.accumulator.append({attr: attr, args: arguments});
 				return this;
 			}
 		});
 
-	prototype.transition = function(){
-		this.selection = this.selection.transition();
-		return this();
+	deferralPrototype.transition = function(){
+		var sel = this.selection.transition();
+		this.accumulator.forall(function(action){
+			sel = sel[action.attr].apply(sel, action.args);
+		});
+		return sel;
 	};
-
-	//prototype.immediate = function(){
-	//	return this.selection;
-	//};
 
 	d3.selection.prototype.defer = function(){
 		return new Deferral(this);

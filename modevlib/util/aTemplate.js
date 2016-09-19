@@ -96,7 +96,9 @@ var Template = function Template(template){
 	};
 
 	function _expand(template, namespaces){
-		if (template instanceof Array) {
+		if (template == undefined){
+			return "";
+		}else if (template instanceof Array) {
 			return _expand_array(template, namespaces);
 		} else if (isString(template)) {
 			return _expand_text(template, namespaces);

@@ -7,29 +7,15 @@ importScript("../modevlib/qb/qb.js");
 
 
 function gantt(params){
+
+	var DEBUG=true;
+
+
 	var target = params.target;
 	var drawDiv = d3.select("#" + target);
 
-	//TODO: THIS WILL ACCUMULATE layout UNTIL THE STRING IS TOO LONG
-	//SET HEIGHT AND WIDTH
-	var width = Map.get(params, "style.width");
-	var height = Map.get(params, "style.height");
-	var layout = coalesce(drawDiv.attr("layout"), "");
-	if (!width) {
-		layout += layout + "left=" + target + ".left;right=" + target + ".right;";
-		drawDiv.attr("layout", layout);
-	} else {
-		drawDiv.width(width);
-	}//endif
-
-	if (!height) {
-		layout += layout + "top=" + target + ".top;bottom=" + target + ".bottom;";
-		drawDiv.attr("layout", layout);
-	} else {
-		drawDiv.width(height);
-	}//endif
-
 	var colors = aChart.DEFAULT_STYLES.select("color");
+
 	var BORDER = 2;
 	var HEIGHT = 30;
 	var LINE_PADDING = 10;
@@ -92,13 +78,25 @@ function gantt(params){
 		Log.error("{{missed}} axis have been mentioned, but not listed.", {"missed": missed_axis});
 	}//endif
 
-	// GIVE EACH AXIS A `_domain.scale` TO BE USED WHILE CHARTING
+	// GIVE EACH AXIS A `domain._scale` TO BE USED WHILE CHARTING
 	all_axis_seen.forall(function(a){
 		var _axis = params.axis[a];
+		if (!_axis) params.axis[a] = {};
+
 		var pa = Map.get(_axis, "domain.partitions");
 		if (!pa && parts[a]) pa = qb.sort(parts[a], ".");
 		if (pa) {
-			Map.set(_axis, "_domain.scale", d3.scaleBand().domain(pa));
+			//TODO: MAKE A BETTER scaleBand THAT CAN HANDLE MORE BAR SPACING OPTIONS
+			//TODO: GIVE EACH SERIES THEIR OWN scaleBand?
+			var ratio = 0;
+			var bar_spacing = coalesce(Map.get(_axis, "style.bar-spacing"), "10%");
+			if (isString(bar_spacing) && bar_spacing.trim().right(1) == "%"){
+				var percent = convert.String2Integer(bar_spacing.trim().leftBut(1));
+				ratio = percent / (100 + percent);
+			}else{
+				Log.error("Only accepts % bar-spacing");
+			}//endif
+			Map.set(_axis, "domain._scale", d3.scaleBand().padding(ratio).domain(pa));
 		} else {
 			var mi = coalesce(Map.get(_axis, "domain.min"), min[a]);
 			var ma = coalesce(Map.get(_axis, "domain.max"), max[a]);
@@ -108,7 +106,7 @@ function gantt(params){
 				if (mi > 0) mi = 0;
 			}//endif
 
-			Map.set(_axis, "_domain.scale", d3.scaleLinear().domain([mi, ma]));
+			Map.set(_axis, "domain._scale", d3.scaleLinear().domain([mi, ma]));
 		}//endif
 	});
 
@@ -118,8 +116,11 @@ function gantt(params){
 		;
 
 
+
 	var chartWidth = d3.scaleLinear();
 	var chartHeight = d3.scaleLinear();
+	params.style._width = chartWidth;
+	params.style._height = chartHeight;
 
 	var update = [];
 
@@ -130,15 +131,18 @@ function gantt(params){
 
 	update.append(drawDiv
 		.defer()
-		.attr("width", chartWidth(1))
-		.attr("height", chartHeight(1))
+		.attr("width", function(d){ return chartWidth(1);})
+		.attr("height", function(d){ return chartHeight(1);})
 	);
 
 	update.append(svg
 		.defer()
-		.width(chartWidth)
-		.height(chartHeight)
+		.width(function(d){ return chartWidth(1);})
+		.height(function(d){ return chartHeight(1);})
 	);
+
+
+
 
 	var e = svg
 		.selectAll("rect")
@@ -146,37 +150,74 @@ function gantt(params){
 		.enter()
 		;
 
+	if (DEBUG){
+		var div = $("#" + target);
+
+		//SET HEIGHT AND WIDTH
+		var width = Map.get(params, "style.width");
+		var height = Map.get(params, "style.height");
+		if (width!=null) drawDiv.width(width);
+		if (height!=null) drawDiv.width(height);
+
+		chartWidth.range([0, coalesce(Map.get(params, "style.width"), div.width())]);
+		chartHeight.range([0, coalesce(Map.get(params, "style.height"), div.height())]);
+	}
+
+	//STYLE THE AXIS, AND LINES
+	//Map.forall(params.axis, function(a, _axis){
+		var xAxis = d3.axisTop()
+			.scale(chartWidth)
+			.ticks(5)
+			//.tickSize(chartHeight(1))
+		;
+		update.append(e
+			.append('g')
+			.defer()
+			.html("")
+			.call(xAxis)
+		);
+
+	//});
+
+
+	//TODO: THE CHART AREAS HAVE DIMENSIONS, THAT CHANGES THE RANGE FOR THE AXIS
+	// EACH (AREA, AXIS) PAIR SHOULD HAVE THEIR OWN SCALE
 	params.series.forall(function(series, si){
 
 		if (series.type == "gantt") {
 			var area = Map.setDefault(Map.get(params.area, series.area), {"x": "x", "y": "y"});
 			var selectX = series._select.filter({"eq": {"axis": area.x}})[0];
 			var axisX = params.axis[selectX.axis];
-			var dx = axisX._domain.scale;
+			var dx = axisX.domain._scale.range(chartWidth.range());
 			var selectY = series._select.filter({"eq": {"axis": area.y}})[0];
 			var axisY = params.axis[selectY.axis];
-			var dy = axisY._domain.scale;
+			var dy = axisY.domain._scale.range(chartHeight.range());
+
+			function exists(d){
+				return dy.domain().contains(selectY.value_accessor(d));
+			}
 
 			function x(d){
-				return dx(selectX.range.min_accessor(d));
+				return safe(dx(selectX.range.min_accessor(d)));
 			}
 
 			function y(d){
-				return dy(selectY.value_accessor(d));
+				return safe(dy(selectY.value_accessor(d)));
 			}
 
 			function width(d){
-				return dx(selectX.range.max_accessor(d) - selectX.range.min_accessor(d));
+				return safe(dx(selectX.range.max_accessor(d) - selectX.range.min_accessor(d)));
 			}
 
 			function height(d){
-				return dy.bandwidth();
+				return exists(d) ? safe(dy.bandwidth()) : 0;
 			}
 
 			//SHOW BARS
 			update.append(e
 				.append("rect")
 				.defer()
+				.exists(exists)
 				.x(x)
 				.y(y)
 				.width(width)
@@ -184,13 +225,15 @@ function gantt(params){
 				.fill(coalesce(Map.get(series, "style.color"), colors[si]))
 			);
 
-			var text = coalesce(new Template(series.label), "" + selectX.value_accessor);
+			var text = new Template(coalesce(series.label, ""));
 
 			//SHOW NAME OF EACH STEP (CLIP TO svg)
 			var textHolder = e.append("svg");
 
 			update.append(textHolder
+			// IF NOT IN DOMAIN, THEN DO NOT SHOW
 				.defer()
+				.exists(exists)
 				.x(function(d){
 					return x(d) + BORDER;
 				})
@@ -201,7 +244,7 @@ function gantt(params){
 					return aMath.max(width(d) - BORDER - BORDER, 0)
 				})
 				.height(function(d){
-					return height(d) - BORDER - BORDER
+					return aMath.max(0, height(d) - BORDER - BORDER)
 				})
 			);
 			update.append(textHolder.append("text")
@@ -209,15 +252,20 @@ function gantt(params){
 					return text.expand(d);
 				})
 				.defer()
-				.style("font-size", function(d){return (dy.bandwidth() - BORDER - BORDER) + "px"})
+				.exists(exists)
+				.style("font-size", function(d){
+					if (exists(d)) return (dy.bandwidth() - BORDER - BORDER) + "px";
+					return "0px"
+				})
 				.y(function(d){
-					return height(d) - (BORDER * 3);
+					return aMath.max(0, height(d) - (BORDER * 3));
 				})
 				.fill('black')
 			);
 
 			//INVISIBLE HOVER OVERLAY
 			update.append(e
+				.exists(exists)
 				.append("rect")
 				.on("click", series.click)
 				.on("mouseover", function(d){
@@ -254,25 +302,34 @@ function gantt(params){
 	});
 
 
-	var draw = function draw(){
+
+
+
+	params._draw = function draw(){
 		var div = $("#" + target);
+
 		chartWidth.range([0, coalesce(Map.get(params, "style.width"), div.width())]);
 		chartHeight.range([0, coalesce(Map.get(params, "style.height"), div.height())]);
 
 		//TODO: THE CHART AREAS HAVE DIMENSIONS, THAT CHANGES THE RANGE FOR THE AXIS
 		// EACH (AREA, AXIS) PAIR SHOULD HAVE THEIR OWN SCALE
-		params.axis["x"]._domain.scale.range(chartWidth.range());
-		params.axis["y"]._domain.scale.range(chartHeight.range());
+		params.axis["x"].domain._scale.range(chartWidth.range());
+		params.axis["y"].domain._scale.range(chartHeight.range());
 
 		update.forall(function(u){
-			u()
+			u.transition()
 		})
 	};
 
 
-	onDynamicLayout(draw);
-	draw();
+	onDynamicLayout(params._draw);
+	params._draw();
 
+	function safe(v){
+		return aMath.isNaN(v) || v==null ? 0 : v;
+	}
 
-}//showTimeline
+	return params;
+}
+
 

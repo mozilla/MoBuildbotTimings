@@ -323,7 +323,7 @@ var reverseMap = function(map, codomain){
 function coalesce(){
 	var args = arguments;
 	if (args instanceof Array && args.length == 1) {
-		if (arguments[0] == undefined) {
+		if (arguments[0] == null) {
 			return null;
 		} else {
 			args = arguments[0]; //ASSUME IT IS AN ARRAY

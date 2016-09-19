@@ -587,7 +587,6 @@ var onDynamicLayout;  //CALL THIS WITH A FUNCTION THAT WILL BE CALLED AFTER EACH
 		return Object.keys(res);
 	}//function
 
-
 	onDynamicLayout=function(func){
 		postLayoutFunctions.push(func);
 	};//function

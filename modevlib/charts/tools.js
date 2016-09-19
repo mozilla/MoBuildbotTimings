@@ -105,7 +105,7 @@ importScript("../collections/aArray.js");
 
 	var deferralPrototype = function(){};
 
-	["cx", "cy", "x", "y", "width", "height", "fill", "visibility", "style", "attr", "translate", "rotate", "append", "text", "exists", "html"]
+	["cx", "cy", "x", "y", "width", "height", "fill", "visibility", "style", "attr", "translate", "rotate", "append", "text", "exists", "call"]
 		.forall(function(attr){
 			deferralPrototype[attr]=function(){
 				if (DEBUG){

@@ -327,6 +327,14 @@ importScript("../util/aUtil.js");
 	}
 	Array.OR=OR;
 
+	Array.range = function range(min, max, step){
+		if (step===undefined) step=1;
+		var output = [];
+		for (var i = min; i < max; i += step) {
+			output.append(i);
+		}//for
+		return output;
+	};//function
 
 	Array.extend=function extend(){
 		var arrays = (arguments.length==1  && arguments[0] instanceof Array) ? arguments[0] : arguments;

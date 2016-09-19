@@ -17,8 +17,8 @@ importScript([
     var svg = d3Area
             .html("")
             .append("svg")
-            .width(500)
-            .height(500)
+            .width(800)
+            .height(800)
     ;
     var e = svg
         .selectAll("rect")
@@ -26,9 +26,29 @@ importScript([
         .enter()
         ;
 
-    var scale = d3.scaleLinear().domain([0, 5]).range([0, 100]);
+    var scale = d3.scaleLinear().domain([0, 5]).range([0, 500]);
 
-    var update = e.append("rect").defer()
+    var xAxis = d3.axisTop()
+        .scale(scale)
+        .ticks(5)
+        .tickSize(-100)
+//        .tickFormat(function(d){ new Template("{{data|json}}").expand({"data":d})})
+        //.tickSize(chartHeight(1))
+    ;
+
+    var update = [];
+
+    update.append(e
+        .append('g')
+        .translate(0, 20)
+        .defer()
+        .html("")
+        .call(xAxis)
+    );
+
+    update.append(e
+        .append("rect")
+        .defer()
         .x(function(d){
             return scale(d.x);
         })
@@ -42,13 +62,18 @@ importScript([
             return scale(d.dy);
         })
         .fill("green")
-    ;
+    );
 
-    update();
+    update.forall(function(u){
+        u();
+    });
 
     setTimeout(function(){
         scale.range([0, 200]);
-        update.transition();
+
+        update.forall(function(u){
+            u();
+        });
     }, 2000);
 
 });

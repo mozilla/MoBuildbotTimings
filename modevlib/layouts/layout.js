@@ -60,10 +60,12 @@ var onDynamicLayout;  //CALL THIS WITH A FUNCTION THAT WILL BE CALLED AFTER EACH
 			items(dimMap, function(dim, mapper){
 				//formula IS A {"l":{}, "r":{}} OBJECT DESCRIBING THE LHS AND RHS OF THE EQUATION RESPECTIVLY
 				var formula = rel[dim];
-				if (formula.length == 0) {
-					//DEFAULT IS TO CENTER EVERYTHING
-					self.css(mapper.left, "50%");
-					addTransform(self, translate(-0.5, dim));
+				if (formula.length == 0){
+					if (mapSelf2DynamicFormula[dim][selfID].length==0) {
+						//DEFAULT IS TO CENTER EVERYTHING
+						self.css(mapper.left, "50%");
+						addTransform(self, translate(-0.5, dim));
+					}//endif
 					return;
 				}//endif
 

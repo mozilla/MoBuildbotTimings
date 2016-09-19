@@ -106,7 +106,7 @@ function gantt(params){
 				if (mi > 0) mi = 0;
 			}//endif
 
-			Map.set(_axis, "domain._scale", d3.scaleLinear().domain([mi, ma]));
+			Map.set(_axis, "domain._scale", d3.scaleLinear().domain([mi, ma]).nice());
 		}//endif
 	});
 
@@ -127,7 +127,7 @@ function gantt(params){
 	var svg = drawDiv
 		.html("")
 		.append("svg")
-		;
+	;
 
 	update.append(drawDiv
 		.defer()
@@ -141,8 +141,7 @@ function gantt(params){
 		.height(function(d){ return chartHeight(1);})
 	);
 
-
-
+	svg = svg.append("g").translate(0,40);
 
 	var e = svg
 		.selectAll("rect")
@@ -165,17 +164,23 @@ function gantt(params){
 
 	//STYLE THE AXIS, AND LINES
 	//Map.forall(params.axis, function(a, _axis){
-		var xAxis = d3.axisTop()
-			.scale(chartWidth)
-			.ticks(5)
-			//.tickSize(chartHeight(1))
-		;
-		update.append(e
-			.append('g')
-			.defer()
-			.html("")
-			.call(xAxis)
+	var xAxis = function(self){
+		self.call(
+			d3.axisTop()
+				.scale(params.axis.x.domain._scale)
+				.ticks(5)
+				.tickFormat(function(value){
+					return new Template("{{h|round(1)}}h").expand({"h":value/3600});
+				})
+				.tickValues(Array.range(1, 6).map(function(v){return v*3600;}))
+				.tickSize(-chartHeight(1))
 		);
+	};
+	update.append(svg
+		.append('g')
+		.defer()
+		.call(xAxis)
+	);
 
 	//});
 

@@ -218,8 +218,8 @@ var DEFAULT_QUERY_LIMIT = 20;
 //        TOO EXPENSIVE FOR ES TO CALCULATE, NEED AN EQUATION SIMPLIFIER
 				part.fullFilter = {"and": [part.esfilter]};
 				if (siblingFilters !== undefined) {
-					part.fullFilter["and"].appendArray(siblingFilters.map(function (f) {
-						return {"not": f}
+					part.fullFilter["and"].extend(siblingFilters.map(function (f) {
+						return {"not": f};
 					}))
 				}//endif
 				if (lowerCaseOnly) part.esfilter = convert.json2value(convert.value2json(part.esfilter).toLowerCase());

@@ -92,7 +92,7 @@ importScript([
                         {"in": {"build.type": ["pgo", "debug"]}}
                     ]
                 },
-                {"in": {"build.branch": ["mozilla-inbound", "try"]}}
+                {"in": {"build.branch": ["try"]}}
             ]
         };
 
@@ -117,6 +117,7 @@ importScript([
             var query = {
                 "from": "jobs",
                 "select": [
+                    {"aggregate": "count"},
                     {
                         "name": "wait_time",
                         "value": {"sub": ["action.start_time", "action.request_time"]},
@@ -171,6 +172,7 @@ importScript([
             var query = {
                 "from": "jobs",
                 "select": [
+                    {"aggregate": "count"},
                     {
                         "name": "wait_time",
                         "value": {"sub": ["action.start_time", "action.request_time"]},
@@ -226,15 +228,18 @@ importScript([
         yield Thread.join(tests_thread);
 
         //SHOW THE (MAX) END-TO-END TIMES BY PLATFORM
+        var build_counts = new Matrix({"data": build_averages.data.count});
         var build_wait_times = new Matrix({"data": build_averages.data.wait_time});
         var build_durations = new Matrix({"data": build_averages.data.duration});
         var build_end_times = new Matrix({"data": build_averages.data.end_time});
+        var test_counts= new Matrix({"data": test_averages.data.count});
         var test_wait_times = new Matrix({"data": test_averages.data.wait_time});
         var test_durations = new Matrix({"data": test_averages.data.duration});
         var test_end_times = new Matrix({"data": test_averages.data.end_time});
 
         var actions = [];
         build_durations.forall(function(build_duration, c){
+            var build_count = build_counts.get(c);
             var build_wait_time = build_wait_times.get(c);
             var build_end_time = build_end_times.get(c);
             var total = build_wait_time + build_duration;
@@ -244,16 +249,17 @@ importScript([
 
             var build_details = {
                 "build_name": buildName,
+                "build_count": build_count,
                 "build_request_time": 0,
-                "build_start_time": build_wait_time / (total / build_end_time),
+                "build_start_time": build_end_time - build_duration,
                 "build_wait_time": build_wait_time,
                 "build_end_time": build_end_time,
-                "build_duration": build_duration / (total / build_end_time),
+                "build_duration": build_duration,
                 "tests": []
             };
 
             build_details.tests = test_averages.edges[2].domain.partitions
-                .map(function(part, i){
+                .mapExists(function(part, i){
                     var tc = [c[0], c[1], i];
 
                     var test_duration = test_durations.get(tc);
@@ -264,14 +270,14 @@ importScript([
 
                     return {
                         "test_name": part.name,
+                        "test_count": test_counts.get(tc),
                         "test_request_time": build_end_time,
                         "test_wait_time": test_wait_time,
-                        "test_start_time": build_end_time + test_wait_time / (total / test_end_time),
+                        "test_start_time": build_end_time + test_end_time-test_duration,
                         "test_end_time": build_end_time + test_end_time,
                         "test_duration": test_duration
                     };
                 })
-                .filter({"exists": "."})
                 .orderBy({"test_end_time": "desc"})
             ;
             build_details.tests.forall(function(t, i){t.index=i;});
@@ -331,6 +337,7 @@ importScript([
                     "type": "gantt",
                     "style": {
                         "color":"#7f7f7f",
+                        "opacity": 0.3,
                         "style":{"bar-spacing":"20%"}
                     },
                     "select": [
@@ -338,7 +345,7 @@ importScript([
                         {"name": "y", "value": "index"}
                     ],
                     "tip": {
-                        "format": 'Build Wait Time<br>Duration = {{build_wait_time|format("H:mm:ss")}}'
+                        "format": 'Build Wait Time<br>Duration = {{build_wait_time|format("H:mm:ss")}}<br>Count = {{build_count}}'
                     }
 
                 },
@@ -351,20 +358,7 @@ importScript([
                         {"name": "y", "value": "index"}
                     ],
                     "tip": {
-                        "format": '{{build_name}}<br>Duration = {{build_duration|format("H:mm:ss")}}'
-                    }
-                },
-                {
-                    "name":"Test Wait Time",
-                    "label": "wait",
-                    "type": "gantt",
-                    "style": {"color":"#7f7f7f"},
-                    "select": [
-                        {"name": "x", "range": {"min": "test_request_time", "max": "test_start_time"}},
-                        {"name": "y", "value": "index"}
-                    ],
-                    "tip": {
-                        "format": 'Test Wait Time<br>Duration = {{test_wait_time|format("H:mm:ss")}}'
+                        "format": '{{build_name}}<br>Duration = {{build_duration|format("H:mm:ss")}}<br>Count = {{build_count}}'
                     }
                 },
                 {
@@ -376,9 +370,25 @@ importScript([
                         {"name": "y", "value": "index"}
                     ],
                     "tip": {
-                        "format": '{{test_name}}<br>Duration = {{test_duration|format("H:mm:ss")}}'
+                        "format": '{{test_name}}<br>Duration = {{test_duration|format("H:mm:ss")}}<br>Count = {{test_count}}'
                     }
-                }
+                },
+                {
+                    "name":"Test Wait Time",
+                    "label": "wait",
+                    "type": "gantt",
+                    "style": {
+                        "color":"#7f7f7f",
+                        "opacity": 0.3
+                    },
+                    "select": [
+                        {"name": "x", "range": {"min": "test_request_time", "max": {"add":["test_request_time", "test_wait_time"]}}},
+                        {"name": "y", "value": "index"}
+                    ],
+                    "tip": {
+                        "format": 'Test Wait Time<br>Duration = {{test_wait_time|format("H:mm:ss")}}<br>Count = {{test_count}}'
+                    }
+                },
             ],
             "tip": {
                 "format": '{{name}}<br>Duration = {{duration|format("H:mm:ss")}}',

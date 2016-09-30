@@ -1085,18 +1085,18 @@ function joinField(path){
 		output.name = query.name;
 		output.from = query;
 		output.edges = [];
-		output.edges.appendArray(commonEdges);
+		output.edges.extend(commonEdges);
 		output.select = [];
 		output.columns = [];
-		output.columns.appendArray(commonEdges);
+		output.columns.extend(commonEdges);
 
 		output.cube = qb.cube.newInstance(output.edges, 0, []);
 		Map.copy(qb.query.prototype, output);
 
 		query.forall(function(item, index){
 			//COPY SELECT DEFINITIONS
-			output.select.appendArray(Array.newInstance(item.from.select));
-			output.columns.appendArray(Array.newInstance(item.from.select));
+			output.select.extend(Array.newInstance(item.from.select));
+			output.columns.extend(Array.newInstance(item.from.select));
 
 
 			//VERIFY DOMAINS ARE IDENTICAL, AND IN SAME ORDER

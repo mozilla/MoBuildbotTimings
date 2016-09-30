@@ -10,7 +10,7 @@
 <BODY>
 
 
-<div id="sidebar" layout="tl=window.tl;bottom=footer.bottom;" style="width:0;overflow:hidden;">
+<div id="sidebar" layout="tl=page.tl;" style="width:0;overflow:hidden;">
 	<div id="description" style="padding-left:10px;">
 		<h3>About</h3>
 		Specific build times.  Click on the chart for a timeline of the build selected.
@@ -64,7 +64,8 @@ importScript([
 			'<b>Branch :</b>{{branch}}<br>'+
 			'<b>Revision :</b>{{revision|left(12)}}<br>' +
 			'<b>Start Time :</b>{{start|format("MMM dd, HH:mm")}}<br>' +
-			'<b>Duration :</b>{{duration|round(3)}} minutes'
+            '<b>Duration :</b>{{duration|round(3)}} minutes<br>' +
+            '<b>Chunk :</b>{{chunk}}'
 	);
 
 	var DETAIL = new Template([
@@ -101,29 +102,36 @@ importScript([
 
 		var startTime = Date.newInstance(GUI.state.sampleMin);
 		var endTime = Date.newInstance(GUI.state.sampleMax);
-		var platformName = GUI.state.platform.getSimpleState();
-		var platformFilter = {"or": GUI.state.platform.getSelectedParts().select("fullFilter")};
+        var branchName = GUI.state.branch.getSimpleState();
+        var branchFilter = {"or": GUI.state.branch.getSelectedParts().select("esfilter")};
+        var platformName = GUI.state.platform.getSimpleState();
+        var platformFilter = {"or": GUI.state.platform.getSelectedParts().select("fullFilter")};
 		var productName = GUI.state.product.getSimpleState();
 		var productFilter = {"or": GUI.state.product.getSelectedParts().select("fullFilter")};
 		var typeName = GUI.state.type.getSimpleState();
-		var typeFilter = {"or": GUI.state.type.getSelectedParts().select("fullFilter")};
+        var typeFilter = {"or": GUI.state.type.getSelectedParts().select("fullFilter")};
+        var testName = GUI.state.test.getSimpleState();
+        var testFilter = {"or": GUI.state.test.getSelectedParts().select("esfilter")};
 
 		if (!platformName){
 			$("#title").html("Expecting a platform");
 			yield (null);
 		}//endif
 
-		$("#title").html(new Template("{{type}} {{product}} {{platform}} Build Times").expand({
+		$("#title").html(new Template("{{test|camel}} - {{platform}} ({{type}})").expand({
 			"type": typeName,
 			"product": productName,
-			"platform": platformName
+			"platform": platformName,
+            "test": testName
 		}));
 
 		var totalsFilter = {"and":[
-			{"eq": {"action.type": "build"}},
+            {"eq": {"action.buildbot_status": "success"}},
+            branchFilter,
 			productFilter,
 			platformFilter,
-			typeFilter
+			typeFilter,
+            testFilter
 		]};
 
 		//SUMMARY OF BUILD TIMES SINCE minDate
@@ -134,7 +142,7 @@ importScript([
 				"and": [
 					totalsFilter,
 					{"gte": {"action.start_time": startTime.unix()}},
-					{"lt": {"action.start_time": endTime.unix()}}
+					{"lt": {"action.start_time": endTime.unix()}},
 				]
 			},
 			"limit": 1000
@@ -148,24 +156,31 @@ importScript([
 			Log.actionDone(a);
 		}//try
 
-		a = Log.action("Loading "+count.data.count+" builds", true);
+        var duration = {"div": {"action.duration": 60}, "default": 0};
+        if (GUI.state.showWaitTime){
+            duration = {"div":[{"sub":["action.end_time", "action.request_time"]}, 60], "default":0}
+        }//endif
+
+		a = Log.action("Loading "+count.data.count+" tests", true);
 		try{
 			var details = yield (search({
 				"from":"jobs",
 				"select":[
                     {"name":"request", "value":"action.request_time"},
-					{"name":"start", "value":"action.start_time"},
+                    {"name":"start", "value":"action.start_time"},
+                    {"name":"end", "value":"action.end_time"},
 					{"name":"status", "value":"action.buildbot_status"},
-					{"name":"duration", "value": {"div": {"action.duration": 60}, "default": 0}},
+					{"name":"duration", "value": duration},
 					{"name":"branch", "value":"build.branch"},
 					{"name":"revision", "value":"build.revision"},
-					{"name":"pool", "value":"run.machine.pool"}
+                    {"name":"pool", "value":"run.machine.pool"},
+                    {"name":"chunk", "value":{"coalesce":[{"string": "run.chunk"}, {"literal": "-"}]}}
 				],
 				"where": {
 					"and": [
 						totalsFilter,
-						{"gte": {"action.start_time": startTime.unix()}},
-						{"lt": {"action.start_time": endTime.unix()}}
+						{"gte": {"action.request_time": startTime.unix()}},
+						{"lt": {"action.request_time": endTime.unix()}}
 					]
 				},
 				"format": "list",
@@ -183,20 +198,16 @@ importScript([
 		$("#chart_area").html("");
 		aChart.showScatter({
 			"target": "chart_area",
-			"hover":{"format": "{{duration|round(3)}}minutes"},
+			"hover":{"format": "{{duration|format('h:mm')}}"},
 			"data": details.data,
 			"tip":{
 				"format": HOVER
 			},
 			"series":[
 				{
-					"name": "Branch",
-					"value": {
-						"when": {"eq": {"status": "success"}},
-						"then": "branch",
-						"else": "success"
-					},
-					"axis":"color",
+					"name": "Chunk",
+					"value": "chunk",
+					"axis": "color"
 				}
 			],
 			"axis": {
@@ -215,7 +226,7 @@ importScript([
 					"missing": {"style": {"color": "red"}},
 					"domain": {
 						"type": "set",
-						"partitions": Array.union(details.data.select("branch"))
+						"partitions": Array.union(details.data.select("chunk"))
 					}
 				}
 			},
@@ -281,8 +292,18 @@ importScript([
         GUI.setup(
             createChart,
             [
+                {"id": "showWaitTime", "name": "Include Wait Time", "type":"boolean", "default": false},
                 {"id": "sampleMin", "name": "Start Date", "type": "time", "default": Date.eod().add("-3week")},
                 {"id": "sampleMax", "name": "End Date", "type": "time", "default": Date.today()},
+                {
+                    "id": "branch", "name": "Branch", "default":"try", "type": PartitionFilter.newInstance({
+                    "id": "branch",
+                    "name": "branch",
+                    "dimension": Mozilla.Builds.Branch,
+                    "onlyOne": false,
+                    "expandAll": true
+                })
+                },
                 {
                     "id": "platform", "name": "Platform", "type": PartitionFilter.newInstance({
                     "id": "platform",
@@ -310,7 +331,15 @@ importScript([
                     "expandAll": true
                 })
                 },
-                {"id": "test", "name": "Test", "default": "xpcshell", "type": "text"}
+                {
+                    "id": "test", "name": "Test Suite", "default": "mochitest", "type": PartitionFilter.newInstance({
+                    "id": "test",
+                    "name": "test",
+                    "dimension": Mozilla.Builds.Test,
+                    "onlyOne": true,
+                    "expandAll": true
+                })
+                }
             ],
             [],
             "",

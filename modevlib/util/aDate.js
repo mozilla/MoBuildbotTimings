@@ -851,7 +851,7 @@ Date.getDateFromFormat=function(val, format, isPastDate){
 	var monthFirst = ['M / d / y', 'M - d - y', 'M . d . y', 'MMM - d', 'M / d', 'M - d'];
 	var dateFirst = ['d / M / y', 'd - M - y', 'd . M . y', 'd - MMM', 'd / M', 'd - M'];
 
-	Date.CheckList = [].appendArray(generalFormats).appendArray(dateFirst).appendArray(monthFirst);
+	Date.CheckList = [].extend(generalFormats).extend(dateFirst).extend(monthFirst);
 }
 
 

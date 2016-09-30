@@ -432,6 +432,7 @@ var convert = function(){
 		return value - 0;
 	};//method
 
+	convert.value2number=convert.String2Integer;
 
 	function unPipe(value){
 		var s = value.indexOf("\\", 1);

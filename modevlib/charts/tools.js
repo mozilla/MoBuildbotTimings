@@ -14,12 +14,12 @@ importScript("../collections/aArray.js");
 
 		["cx", "cy", "x", "y", "width", "height"].forall(function(name){
 			proto[name] = function(){
-				return proto.attr.apply(this, [name].appendArray(arguments));
+				return proto.attr.apply(this, [name].extend(arguments));
 			}
 		});
-		["fill", "visibility"].forall(function(name){
+		["fill", "visibility", "opacity"].forall(function(name){
 			proto[name] = function(){
-				return proto.style.apply(this, [name].appendArray(arguments));
+				return proto.style.apply(this, [name].extend(arguments));
 			}
 		});
 
@@ -51,7 +51,7 @@ importScript("../collections/aArray.js");
 
 		["translate", "rotate"].forall(function(name){
 			proto[name] = function(){
-				return transform.apply(this, [name].appendArray(arguments));
+				return transform.apply(this, [name].extend(arguments));
 			}
 		});
 
@@ -105,7 +105,7 @@ importScript("../collections/aArray.js");
 
 	var deferralPrototype = function(){};
 
-	["cx", "cy", "x", "y", "width", "height", "fill", "visibility", "style", "attr", "translate", "rotate", "append", "text", "exists", "call"]
+	["cx", "cy", "x", "y", "width", "height", "fill", "visibility", "style", "attr", "translate", "rotate", "append", "text", "exists", "call", "opacity"]
 		.forall(function(attr){
 			deferralPrototype[attr]=function(){
 				if (DEBUG){

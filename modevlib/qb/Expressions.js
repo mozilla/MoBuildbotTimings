@@ -153,3 +153,19 @@ expressions.gt = function(expr){
 		};//function
 	}//endif
 };
+
+expressions.add = function(expr){
+	if (isArray(expr.add)) {
+		var exprs = expr.add.map(qb2function);
+		return function(value){
+			return exprs[0](value) + exprs[1](value);
+		};
+	} else {
+		var k = Map.keys(expr.add)[0];
+		var kk = qb2function(k);
+		var vv = qb2function(expr.add[k]);
+		return function(value){
+			return kk(value) + vv(value);
+		};//function
+	}//endif
+};

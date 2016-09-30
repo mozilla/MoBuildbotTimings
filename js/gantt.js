@@ -170,9 +170,9 @@ function gantt(params){
 				.scale(params.axis.x.domain._scale)
 				.ticks(5)
 				.tickFormat(function(value){
-					return new Template("{{h|round(1)}}h").expand({"h":value/3600});
+					return new Template('{{h|format("H:mm")}}').expand({"h":Duration.newInstance(value*1000)});
 				})
-				.tickValues(Array.range(1, 6).map(function(v){return v*3600;}))
+				.tickValues(Array.range(1, 10*2).map(function(v){return v*3600/2;}))
 				.tickSize(-chartHeight(1))
 		);
 	};
@@ -227,6 +227,7 @@ function gantt(params){
 				.y(y)
 				.width(width)
 				.height(height)
+				.opacity(coalesce(Map.get(series, "style.opacity"), 1.0))
 				.fill(coalesce(Map.get(series, "style.color"), colors[si]))
 			);
 

@@ -84,6 +84,31 @@ importScript("../util/aUtil.js");
 		this.splice(index, 0, value);
 	};//method
 
+	/**
+	 * INTERPRET undefined AS OUT-IN-CONTEXT
+	 * @param func - RETURN undefined TO BE REMOVED FROM RESULT
+	 * @returns {Array}
+     */
+	Array.prototype.mapExists=function(func){
+		var output=[];
+		for(var i=0;i<this.length;i++){
+			var v=func(this[i], i, this);
+			if (v===undefined) continue;
+			output.push(v);
+		}//for
+		return output;
+	};//method
+
+	Array.prototype.map=function(func){
+		var output=[];
+		for(var i=0;i<this.length;i++){
+			var v=func(this[i], i, this);
+			if (v===undefined) continue;
+			output.push(v);
+		}//for
+		return output;
+	};//method
+
 	// func IS EXPECTED TO TAKE (group, values) WHERE
 	//     group IS THE GROUP VALUE (OR OBJECT)
 	//     values IS THE LIST IN THAT GROUP
@@ -182,19 +207,17 @@ importScript("../util/aUtil.js");
 		return this;
 	};//method
 
-	function appendArray(arr){
+	function extend(arr){
 		for(var i=0;i<arr.length;i++){
 			this.push(arr[i]);
 		}//for
 		return this;
 	}//method
-	Array.prototype.appendArray=appendArray;
-	Array.prototype.appendList=appendArray;
-	Array.prototype.extend=appendArray;
+	Array.prototype.extend=extend;
 
 
 	if (DEBUG){
-		var temp=[0,1,2].appendArray([3,4,5]);
+		var temp=[0,1,2].extend([3,4,5]);
 		for(var i=0;i<6;i++) if (temp[i]!=i)
 			Log.error();
 	}//endif
@@ -282,7 +305,7 @@ importScript("../util/aUtil.js");
 	//ASSUMES THAT THE COORCED STRING VALUE IS UNIQUE
 	//EXPECTING EACH ARGUMENT TO BE AN ARRAY THAT REPRESENTS A SET
 	Array.prototype.union = function(){
-		return Array.union.apply(undefined, [].appendArray(arguments).append(this));
+		return Array.union.apply(undefined, [].extend(arguments).append(this));
 	};//method
 
 	//RETURN UNION OF UNIQUE VALUES
@@ -341,7 +364,7 @@ importScript("../util/aUtil.js");
 		var output=[];
 		for(var i=0;i<arrays.length;i++){
 			var a = Array.newInstance(arrays[i]);
-			output.appendArray(a);
+			output.extend(a);
 		}//for
 		return output;
 	};

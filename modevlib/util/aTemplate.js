@@ -94,6 +94,28 @@ var Template = function Template(template){
 			return convert.value2json();
 		}
 	};
+	FUNC.camel = function(value){
+		if (isString(value)) {
+			var output = [];
+			var caps=true;
+			for(var i=0;i<value.length;i++){
+				var c= value.charAt(i);
+				if (c.deformat() == "") {
+					output.append(c);
+					caps = true;
+				} else if (caps) {
+					output.append(c.toUpperCase());
+					caps = false
+				} else {
+					output.append(c);
+					caps = false
+				}
+			}//for
+			return output.join("");
+		} else {
+			return convert.value2json();
+		}
+	};
 
 	function _expand(template, namespaces){
 		if (template == undefined){

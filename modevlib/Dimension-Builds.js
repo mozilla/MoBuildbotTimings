@@ -24,6 +24,7 @@ Dimension.addEdges(false, Mozilla, [{
 			"partitions": [
 				{"name": "Standard", "value": null, "ordering": 0, "esfilter": {"missing": "build.type"}},
 				{"name": "PGO", "ordering": 1, "style": {"color": "#f9cb9c"}, "value": "pgo", "esfilter": {"term": {"build.type": "pgo"}}},
+				{"name": "OPT", "ordering": 2, "style": {"color": "#f9cb9c"}, "value": "opt", "esfilter": {"term": {"build.type": "opt"}}},
 				{"name": "Debug", "ordering": 2, "style": {"color": "#f6b26b"}, "value": "debug", "esfilter": {"term": {"build.type": "debug"}}}
 			]
 		},

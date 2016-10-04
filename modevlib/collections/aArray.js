@@ -99,15 +99,15 @@ importScript("../util/aUtil.js");
 		return output;
 	};//method
 
-	Array.prototype.map=function(func){
-		var output=[];
-		for(var i=0;i<this.length;i++){
-			var v=func(this[i], i, this);
-			if (v===undefined) continue;
-			output.push(v);
-		}//for
-		return output;
-	};//method
+	//Array.prototype.map=function(func){
+	//	var output=[];
+	//	for(var i=0;i<this.length;i++){
+	//		var v=func(this[i], i, this);
+	//		if (v===undefined) continue;
+	//		output.push(v);
+	//	}//for
+	//	return output;
+	//};//method
 
 	// func IS EXPECTED TO TAKE (group, values) WHERE
 	//     group IS THE GROUP VALUE (OR OBJECT)

@@ -79,15 +79,20 @@ var Map = {};
 			return dest;
 		}//function
 
-		if (dest == null) dest = {};
 		for (var i = 1; i < arguments.length; i++) {
 			var source = arguments[i];
 			if (source === undefined) {
 				continue;
-			}else if (Map.isMap(source)) {
+			}else if (dest == null){
+				if (Map.isMap(source)) {
+					return _setDefault({}, source, []);
+				}else{
+					dest = source;
+					break;
+				}//endif
+			}else if (Map.isMap(dest)) {
 				return _setDefault(dest, source, []);
-			} else {
-				dest = source;
+			}else{
 				break;
 			}//endif
 		}//for

@@ -10,7 +10,7 @@
 <BODY>
 
 
-<div id="sidebar" layout="tl=window.tl;bottom=footer.bottom;" style="width:0;overflow:hidden;">
+<div id="sidebar" layout="tl=page.tl;" style="width:0;overflow:hidden;">
 	<div id="description" style="padding-left:10px;">
 		<h3>About</h3>
 		Specific build times.  Click on the chart for a timeline of the build selected.
@@ -29,7 +29,7 @@
 </div>
 <div class="content" layout="top=page.top;left=sidebar_name.right;right=window.right;" style="padding: 10px 10px 50px 10px;">
 	<div id="header">
-		<h1 id="title" style="display: inline-block;">Build Times</h1>
+		<div id="title">Build Times</div>
 		<span id="status" style="height:30px">Page Loading...</span>
 		<span class="loading"><img src="images/spinner.gif" alt=""></span>
 	</div>
@@ -38,7 +38,6 @@
 		<div id="details"></div>
 		<div id="timeline" style="width:800px;height:200px;"></div>
 		<div id="raw_activedata"></div>
-
 	</div>
 </div>
 <div id="footer" style="height:50px;text-align: center;padding: 5px 0 5px 0;background-color: #fff;z-index: 12;" layout="bl=window.bl;br=window.br;">
@@ -101,8 +100,11 @@ importScript([
 
 		var startTime = Date.newInstance(GUI.state.sampleMin);
 		var endTime = Date.newInstance(GUI.state.sampleMax);
-		var platformName = GUI.state.platform.getSimpleState();
-		var platformFilter = {"or": GUI.state.platform.getSelectedParts().select("fullFilter")};
+        var branchName = coalesce(GUI.state.branch.getSimpleState(), "All Branches");
+        var selectedBranches = GUI.state.branch.getSelectedParts();
+   		var branchFilter = selectedBranches.length>0 ? {"or": GUI.state.branch.getSelectedParts().select("fullFilter")} : true;
+        var platformName = GUI.state.platform.getSimpleState();
+        var platformFilter = {"or": GUI.state.platform.getSelectedParts().select("fullFilter")};
 		var productName = GUI.state.product.getSimpleState();
 		var productFilter = {"or": GUI.state.product.getSelectedParts().select("fullFilter")};
 		var typeName = GUI.state.type.getSimpleState();
@@ -113,14 +115,17 @@ importScript([
 			yield (null);
 		}//endif
 
-		$("#title").html(new Template("{{type}} {{product}} {{platform}} Build Times").expand({
+		$("#title").html(new Template("<h1>{{product}} Build Times</h1><h3>{{platform}} {{type}} on {{branch}} {{note}}</h3>").expand({
 			"type": typeName,
 			"product": productName,
-			"platform": platformName
+			"platform": platformName,
+            "branch": branchName,
+            "note": GUI.state.showWaitTime ? "(includes wait times)" : ""
 		}));
 
 		var totalsFilter = {"and":[
 			{"eq": {"action.type": "build"}},
+            branchFilter,
 			productFilter,
 			platformFilter,
 			typeFilter
@@ -278,8 +283,18 @@ importScript([
 
 	$(document).ready(function(){
 		GUI.setup(createChart, [
+            {"id": "showWaitTime", "name": "Include Wait Time", "type":"boolean", "default": false},
 			{"id":"sampleMin", "name":"Start Date", "type":"time", "default":Date.eod().add("-3week")},
 			{"id":"sampleMax", "name":"End Date", "type":"time", "default":Date.today()},
+            {
+                "id": "branch", "name": "Branch", "default":"try", "type": PartitionFilter.newInstance({
+                "id": "branch",
+                "name": "branch",
+                "dimension": Mozilla.Builds.Branch,
+                "onlyOne": false,
+                "expandAll": true
+            })
+            },
 			{"id": "platform", "name": "Platform", "type": PartitionFilter.newInstance({
 				"id": "platform",
 				"name": "platform",

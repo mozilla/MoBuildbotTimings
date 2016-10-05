@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 importScript("../lib/d3/d3.js");
 importScript("../modevlib/MozillaPrograms.js");
 importScript("../modevlib/qb/qb.js");
@@ -69,7 +73,7 @@ function gantt(params){
 
 		//ASSIGN DEFAULTS TO SERIES, IF NOT OVERRIDDEN
 		series_details.tip = Map.setDefault(series_details.tip, params.tip);
-		series_details.click = Map.setDefault(series_details.click, params.click);
+		series_details.click = coalesce(series_details.click, params.click);
 	});
 
 	var all_axis_seen = Array.UNION([Map.keys(params.axis), Map.keys(min), Map.keys(max)]);
@@ -165,14 +169,17 @@ function gantt(params){
 	//STYLE THE AXIS, AND LINES
 	//Map.forall(params.axis, function(a, _axis){
 	var xAxis = function(self){
+		var range = params.axis.x.domain._scale.domain();
+		var step = Duration.niceSteps(range[0]*1000, range[1]*1000);
+
 		self.call(
 			d3.axisTop()
 				.scale(params.axis.x.domain._scale)
 				.ticks(5)
 				.tickFormat(function(value){
-					return new Template('{{h|format("H:mm")}}').expand({"h":Duration.newInstance(value*1000)});
+					return Duration.newInstance(value*1000).toString("hour")
 				})
-				.tickValues(Array.range(1, 10*2).map(function(v){return v*3600/2;}))
+				.tickValues(Array.range(1, 10*2).map(function(v){return v*step.milli/1000;}))
 				.tickSize(-chartHeight(1))
 		);
 	};

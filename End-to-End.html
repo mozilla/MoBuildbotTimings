@@ -248,6 +248,7 @@ importScript([
             var buildName = platform.name + (type.name ? " (" + type.name + ")" : "");
 
             var build_details = {
+                "platform": {"name": platform.name, "type": type.name},
                 "build_name": buildName,
                 "build_count": build_count,
                 "build_request_time": 0,
@@ -275,7 +276,8 @@ importScript([
                         "test_wait_time": test_wait_time,
                         "test_start_time": build_end_time + test_end_time-test_duration,
                         "test_end_time": build_end_time + test_end_time,
-                        "test_duration": test_duration
+                        "test_duration": test_duration,
+                        "build": {"platform": build_details.platform}
                     };
                 })
                 .orderBy({"test_end_time": "desc"})
@@ -346,8 +348,10 @@ importScript([
                     ],
                     "tip": {
                         "format": 'Build Wait Time<br>Duration = {{build_wait_time|format("H:mm:ss")}}<br>Count = {{build_count}}'
+                    },
+                    "click":function(data){
+                        showBuildDetails(data, true);
                     }
-
                 },
                 {
                     "name":"Build Duration",
@@ -359,6 +363,9 @@ importScript([
                     ],
                     "tip": {
                         "format": '{{build_name}}<br>Duration = {{build_duration|format("H:mm:ss")}}<br>Count = {{build_count}}'
+                    },
+                    "click":function(data){
+                        showBuildDetails(data, false);
                     }
                 },
                 {
@@ -371,6 +378,9 @@ importScript([
                     ],
                     "tip": {
                         "format": '{{test_name}}<br>Duration = {{test_duration|format("H:mm:ss")}}<br>Count = {{test_count}}'
+                    },
+                    "click":function(data){
+                        showTestDetails(data, false);
                     }
                 },
                 {
@@ -387,11 +397,14 @@ importScript([
                     ],
                     "tip": {
                         "format": 'Test Wait Time<br>Duration = {{test_wait_time|format("H:mm:ss")}}<br>Count = {{test_count}}'
+                    },
+                    "click":function(data){
+                        showTestDetails(data, true);
                     }
                 },
             ],
             "tip": {
-                "format": '{{name}}<br>Duration = {{duration|format("H:mm:ss")}}',
+                "format": '{{name}}<br>Duration = {{duration|format("minute")}}',
                 "style": {
                     "padding": "5px 10px 5px 10px",
                     "position": "absolute",
@@ -416,8 +429,63 @@ importScript([
             chart.style.height = domain.length * BAR_HEIGHT;
             dynamicLayout();
         }
-        dynamicLayout();
 
+        function showTestDetails(data, showWaitTime){
+            //EXPANDED?
+            if (data.tests){
+                //CLICKED ON BUILD LINE, ARE WE EXPANDING? OR ARE WE DRILLING?
+                var old_domain = chart.axis.y.domain._scale.domain();
+                var new_domain = qb.sort(Array.UNION([build_actions, data.tests.select("index")]), ".");
+                if (new_domain.subtract(old_domain).length!=0){
+                    showTests(data);
+                    return;
+                }//endif
+            }//endif
+
+            var param = {
+                "sampleMin": beginPastWeek.format("yyyy-MM-dd"),
+                "sampleMax": Date.today().format("yyyy-MM-dd"),
+                "showWaitTime":  showWaitTime,
+                "test": data.test_name,
+                "product": "Firefox",
+                "type": data.build.platform.type,
+                "platform": data.build.platform.name,
+                "branch": "Try"
+            };
+            var params = convert.Map2URLParam(param);
+            var url = "Timing-Detail.html#" + params;
+            window.open(url);
+        }
+
+        function showBuildDetails(data, showWaitTime){
+            //EXPANDED?
+            if (data.tests){
+                //CLICKED ON BUILD LINE, ARE WE EXPANDING? OR ARE WE DRILLING?
+                var old_domain = chart.axis.y.domain._scale.domain();
+                var new_domain = qb.sort(Array.UNION([build_actions, data.tests.select("index")]), ".");
+                if (new_domain.subtract(old_domain).length!=0){
+                    showTests(data);
+                    return;
+                }//endif
+            }//endif
+
+            var param = {
+                "sampleMin": beginPastWeek.format("yyyy-MM-dd"),
+                "sampleMax": Date.today().format("yyyy-MM-dd"),
+                "showWaitTime":  showWaitTime,
+                "product": "Firefox",
+                "type": data.platform.type,
+                "platform": data.platform.name,
+                "branch": "Try"
+            };
+            var params = convert.Map2URLParam(param);
+            var url = "Builds-Detail.html#" + params;
+            window.open(url);
+        }
+
+
+
+        dynamicLayout();
         yield (null);
     };
 

@@ -180,6 +180,7 @@ var convert = function(){
 		return $.param(value).replaceAll("%5B%5D=", "=");
 	};//method
 
+	convert.Map2URLParam = convert.Object2URL;
 
 	convert.URLParam2Object = function(param){
 		// CONVERT URL QUERY PARAMETERS INTO DICT

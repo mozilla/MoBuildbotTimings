@@ -15,17 +15,19 @@ Dimension.addEdges(false, Mozilla, [{
 			"field": "build.branch",
 			"partitions": [
 				{"name": "Try", "value": "try", "ordering": 0, "esfilter": {"term": {"build.branch": "try"}}},
-				{"name": "Inbound", "value": "mozilla-inbound", "ordering": 0, "esfilter": {"term": {"build.branch": "mozilla-inbound"}}}
+				{"name": "Inbound", "value": "mozilla-inbound", "ordering": 0, "esfilter": {"term": {"build.branch": "mozilla-inbound"}}},
+				{"name": "Central", "value": "mozilla-central", "ordering": 0, "esfilter": {"term": {"build.branch": "mozilla-central"}}},
+				{"name": "Autoland", "value": "autoland", "ordering": 0, "esfilter": {"term": {"build.branch": "autoland"}}}
 			]
 		},
 		{
 			"name": "Type",
 			"field": "build.type",
 			"partitions": [
-				{"name": "Standard", "value": null, "ordering": 0, "esfilter": {"missing": "build.type"}},
+				{"name": "Standard", "ordering": 0, "esfilter": {"missing": "build.type"}},
 				{"name": "PGO", "ordering": 1, "style": {"color": "#f9cb9c"}, "value": "pgo", "esfilter": {"term": {"build.type": "pgo"}}},
 				{"name": "OPT", "ordering": 2, "style": {"color": "#f9cb9c"}, "value": "opt", "esfilter": {"term": {"build.type": "opt"}}},
-				{"name": "Debug", "ordering": 2, "style": {"color": "#f6b26b"}, "value": "debug", "esfilter": {"term": {"build.type": "debug"}}}
+				{"name": "Debug", "ordering": 3, "style": {"color": "#f6b26b"}, "value": "debug", "esfilter": {"term": {"build.type": "debug"}}}
 			]
 		},
 		{

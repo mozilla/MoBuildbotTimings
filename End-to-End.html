@@ -62,7 +62,7 @@ importScript([
     'js/test_data.js'
 ], function(){
     var NUM_TESTS = 5;
-    var BAR_HEIGHT = 20;
+    var BAR_HEIGHT = 30;
 
     layoutAll();
     sidebarSlider();
@@ -76,8 +76,8 @@ importScript([
 
     var __createChart = function*(){
         var beginPastWeek = Date.today().add("-week");
-        var beginPastMonth = Date.newInstance(GUI.state.sampleMin);
-        var endPastMonth = Date.newInstance(GUI.state.sampleMax);
+//        var beginPastMonth = Date.newInstance(GUI.state.sampleMin);
+//        var endPastMonth = Date.newInstance(GUI.state.sampleMax);
         var mainFilter = {
             "and": [
                 {
@@ -501,8 +501,6 @@ importScript([
 
     $(document).ready(function(){
         GUI.setup(createChart, [
-                {"id": "sampleMin", "name": "Start Date", "type": "time", "default": Date.today().add("-2month")},
-                {"id": "sampleMax", "name": "End Date", "type": "time", "default": Date.today()}
             ],
             [],
             "",

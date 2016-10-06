@@ -181,8 +181,8 @@ importScript([
 				"where": {
 					"and": [
 						totalsFilter,
-						{"gte": {"action.request_time": startTime.unix()}},
-						{"lt": {"action.request_time": endTime.unix()}}
+						{"gte": {"action.start_time": startTime.unix()}},
+						{"lt": {"action.start_time": endTime.unix()}}
 					]
 				},
 				"format": "list",
@@ -220,9 +220,9 @@ importScript([
 				},
 				"y": {
 					"value":"duration",
-					"range":{
-						"max": aChart.maxNice(details.data.select("duration"))
-					}
+//					"range":{
+//						"max": aChart.maxNice(details.data.select("duration"))
+//					}
 				},
 				"color": {
 					"missing": {"style": {"color": "red"}},

@@ -1193,6 +1193,7 @@ function joinField(path){
 		var orderedColumns;
 		if (columns === undefined) {
 			orderedColumns = [];
+
 			sortOrder.forall(function(v){
 				if (v.value !== undefined && v.sort !== undefined) {
 					orderedColumns.append({"name": v.value, "sortOrder": coalesce(v.sort, 1), "domain": qb.domain.value});

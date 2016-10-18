@@ -28,6 +28,7 @@ var search = function*(query){
 	var output = yield (Rest.post({
 
 		//url: source.host+"/query",
+		//url: "http://52.26.136.54/query",
 		url: "http://localhost:5000/query",
 		json: query
 	}));

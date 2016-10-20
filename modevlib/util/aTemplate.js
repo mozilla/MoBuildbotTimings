@@ -94,6 +94,9 @@ var Template = function Template(template){
 			return convert.value2json();
 		}
 	};
+	FUNC.unix = function(value){
+		return Date.newInstance(value).unix();
+	};
 	FUNC.camel = function(value){
 		if (isString(value)) {
 			var output = [];

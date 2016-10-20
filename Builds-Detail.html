@@ -72,7 +72,7 @@ importScript([
 		'<tr>' +
 		'   <td style="text-align: right;"><b>{{status|upper}} :</b></td>' +
 		'   <td style="text-align: left;">&nbsp;<b>{{branch}}</b> rev {{revision|left(12)}}</td>' +
-		'   <td rowspan="3" style="text-align: right"><a class="button" href="#" onClick="window.open(\'https://treeherder.mozilla.org/#/jobs?repo={{branch}}&revision={{revision}}\')">Go to Treeherder</a></td>'+
+		'   <td rowspan="3" style="text-align: right"><a class="button" href="#" onClick=\'openTreeherder({{branch|quote}}, {{revision|quote}}, {{start|unix}}, {{buildername|quote}})\'>Go to Treeherder</a></td>'+
 		'</tr>'+
 		'<tr>' +
 		'   <td style="text-align: right;"><b>Start Time :</b></td>' +
@@ -163,7 +163,8 @@ importScript([
 					{"name":"duration", "value": {"div": {"action.duration": 60}, "default": 0}},
 					{"name":"branch", "value":"build.branch"},
 					{"name":"revision", "value":"build.revision"},
-					{"name":"pool", "value":"run.machine.pool"}
+					{"name":"pool", "value":"run.machine.pool"},
+                    {"name":"buildername", "value":"run.key"}
 				],
 				"where": {
 					"and": [

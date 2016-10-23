@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+    <script type="text/javascript" src="modevlib/imports/import.js"></script>
+	<title>Title</title>
+</head>
+<body>
+
+
+<script>
+importScript([
+    "modevlib/charts/tools.js",
+    "lib/jquery.js"
+], function(){
+    $.post(
+   		"https://activedata.allizom.org/query",
+   		'{"from":"jobs"}',
+   		function(data, status){
+   			console.log(JSON.stringify(data));
+   		}
+   	);
+
+//
+//
+//
+//    var data=[{"x": 1, "y": 1, "dx": 2, "dy": 2}];
+//    var d3Area = d3.select("body");
+//    var svg = d3Area
+//            .html("")
+//            .append("svg")
+//            .width(800)
+//            .height(800)
+//    ;
+//    var e = svg
+//        .selectAll("rect")
+//        .data(data)
+//        .enter()
+//        ;
+//
+//    var scale = d3.scaleLinear().domain([0, 5]).range([0, 500]);
+//
+//    var xAxis = d3.axisTop()
+//        .scale(scale)
+//        .ticks(5)
+//        .tickSize(-100)
+////        .tickFormat(function(d){ new Template("{{data|json}}").expand({"data":d})})
+//        //.tickSize(chartHeight(1))
+//    ;
+//
+//    var update = [];
+//
+//    update.append(e
+//        .append('g')
+//        .translate(0, 20)
+//        .defer()
+//        .html("")
+//        .call(xAxis)
+//    );
+//
+//    update.append(e
+//        .append("rect")
+//        .defer()
+//        .x(function(d){
+//            return scale(d.x);
+//        })
+//        .y(function(d){
+//            return scale(d.y);
+//        })
+//        .width(function(d){
+//            return scale(d.dx);
+//        })
+//        .height(function(d){
+//            return scale(d.dy);
+//        })
+//        .fill("green")
+//    );
+//
+//    update.forall(function(u){
+//        u();
+//    });
+//
+//    setTimeout(function(){
+//        scale.range([0, 200]);
+//
+//        update.forall(function(u){
+//            u();
+//        });
+//    }, 2000);
+//
+});
+
+</script>
+</body>
+</html>

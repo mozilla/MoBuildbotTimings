@@ -246,11 +246,11 @@ importScript("tools.js");
 
 
 	/*
-	 RETURN A NICE MAX VALUE, THAT INCLUDES THE IMPORTANT CHART VALUES
+	 RETURN A NICE MAX VALUE, THAT EXCLUDES 10% OUTLIERS
 	 */
 	aChart.maxNice = function(values){
 		var sorted = qb.sort(values, ".");
-		var mostlyMax = sorted[aMath.ceiling(values.length * 0.90)];
+		var mostlyMax = sorted[aMath.ceiling((values.length - 1) * 0.90)];
 		var max = sorted.last();
 
 		if (max <= mostlyMax * 1.1) {

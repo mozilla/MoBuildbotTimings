@@ -116,7 +116,7 @@ importScript([
 		try {
 			var averages = yield (search(query));
 		}catch (e){
-			Log.error("problem with call to ACtiveData", e)
+			Log.error("problem with call to ActiveData", e)
 		}finally{
 			Log.actionDone(a);
 		}//try
@@ -182,12 +182,12 @@ importScript([
 					"limit": 1000
 				};
 
-				//GET TIME SERIES FROM ACtiveData
+				//GET TIME SERIES FROM ActiveData
 				var a=Log.action("Get "+type.value, true);
 				try {
 					var timeSeries = yield (search(queryTimes));
 				}catch (e){
-					Log.error("problem with call to ACtiveData", e)
+					Log.error("problem with call to ActiveData", e)
 				}finally{
 					Log.actionDone(a);
 				}//try

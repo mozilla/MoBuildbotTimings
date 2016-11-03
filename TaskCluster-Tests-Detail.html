@@ -13,7 +13,7 @@
 <div id="sidebar" layout="tl=page.tl;" style="width:0;overflow:hidden;">
 	<div id="description" style="padding-left:10px;">
 		<h3>About</h3>
-		Specific build times.  Click on the chart for a timeline of the build selected.
+		Taskcluster test times. Click on the chart for a timeline of the test selected.
 	</div>
 	<hr>
 	<div id="last-updated" style="text-align: center;width:300px;"></div>
@@ -73,7 +73,7 @@ importScript([
 		'<tr>' +
 		'   <td style="text-align: right;"><b>{{status|upper}} :</b></td>' +
 		'   <td style="text-align: left;">&nbsp;<b>{{branch}}</b> rev {{revision|left(12)}}</td>' +
-		'   <td rowspan="3" style="text-align: right"><a class="button" href="#" onClick=\'openTreeherder({{branch|quote}}, {{revision|quote}}, {{start|unix}}, {{buildername|quote}})\'>Go to Treeherder</a></td>'+
+		'   <td rowspan="3" style="text-align: right"><a class="button" href="#" onClick=\'openTreeherder({{branch|quote}}, {{revision|quote}}, {{start|unix}}, {{task_id|quote}})\'>Go to Treeherder</a></td>'+
 		'</tr>'+
 		'<tr>' +
 		'   <td style="text-align: right;"><b>Start Time :</b></td>' +
@@ -112,6 +112,7 @@ importScript([
         var typeFilter = {"or": GUI.state.type.getSelectedParts().select("fullFilter")};
         var testName = GUI.state.test.getSimpleState();
         var testFilter = {"or": GUI.state.test.getSelectedParts().select("esfilter")};
+        var excludeOutliers = GUI.state.excludeOutliers;
 
 		if (!platformName){
 			$("#title").html("Expecting a platform");
@@ -138,7 +139,7 @@ importScript([
 
 		//SUMMARY OF BUILD TIMES SINCE minDate
 		var query = {
-			"from": "jobs",
+			"from": "task",
 			"select": {"aggregate":"count"},
 			"where": {
 				"and": [
@@ -158,26 +159,27 @@ importScript([
 			Log.actionDone(a);
 		}//try
 
-        var duration = {"div": {"action.duration": 60}, "default": 0};
-        if (GUI.state.showWaitTime){
-            duration = {"div":[{"sub":["action.end_time", "action.request_time"]}, 60], "default":0}
+        var duration;
+        if (GUI.state.showWaitTime) {
+            duration = {"div": [{"sub": ["task.run.end_time", "task.run.scheduled"]}, 60], "default": 0}
+        }else{
+            duration = {"div": [{"sub": ["task.run.end_time", "task.run.start_time"]}, 60], "default": 0}
         }//endif
 
 		a = Log.action("Loading "+count.data.count+" tests", true);
 		try{
 			var details = yield (search({
-				"from":"jobs",
+				"from":"task",
 				"select":[
-                    {"name":"request", "value":"action.request_time"},
-                    {"name":"start", "value":"action.start_time"},
-                    {"name":"end", "value":"action.end_time"},
+                    {"name":"request", "value":"task.run.scheduled"},
+                    {"name":"start", "value":"task.run.start_time"},
+                    {"name":"end", "value":"task.run.end_time"},
 					{"name":"status", "value":"action.buildbot_status"},
 					{"name":"duration", "value": duration},
 					{"name":"branch", "value":"build.branch"},
 					{"name":"revision", "value":"build.revision"},
-                    {"name":"pool", "value":"run.machine.pool"},
                     {"name":"chunk", "value":{"coalesce":[{"string": "run.chunk"}, {"literal": "-"}]}},
-                    {"name":"buildername", "value":"run.key"}
+                    {"name":"task_id", "value":"task.id"}
 				],
 				"where": {
 					"and": [
@@ -221,9 +223,9 @@ importScript([
 				},
 				"y": {
 					"value":"duration",
-//					"range":{
-//						"max": aChart.maxNice(details.data.select("duration"))
-//					}
+					"range":{
+						"max": excludeOutliers ? aChart.maxNice(details.data.select("duration")) : null
+					}
 				},
 				"color": {
 					"missing": {"style": {"color": "red"}},
@@ -296,6 +298,7 @@ importScript([
             createChart,
             [
                 {"id": "showWaitTime", "name": "Include Wait Time", "type":"boolean", "default": false},
+                {"id": "excludeOutliers", "name": "Exclude Outliers", "type":"boolean", "default": true},
                 {"id": "sampleMin", "name": "Start Date", "type": "time", "default": Date.eod().add("-3week")},
                 {"id": "sampleMax", "name": "End Date", "type": "time", "default": Date.today()},
                 {

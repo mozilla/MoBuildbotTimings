@@ -109,6 +109,7 @@ importScript([
 		var productFilter = {"or": GUI.state.product.getSelectedParts().select("fullFilter")};
 		var typeName = GUI.state.type.getSimpleState();
 		var typeFilter = {"or": GUI.state.type.getSelectedParts().select("fullFilter")};
+        var excludeOutliers = GUI.state.excludeOutliers;
 
 		if (!platformName){
 			$("#title").html("Expecting a platform");
@@ -212,9 +213,9 @@ importScript([
 				},
 				"y": {
 					"value":"duration",
-//					"range":{
-//						"max": aChart.maxNice(details.data.select("duration"))
-//					}
+                    "range": {
+                        "max": excludeOutliers ? aChart.maxNice(details.data.select("duration")) : null
+                    }
 				},
 				"color": {
 					"missing": {"style": {"color": "red"}},
@@ -285,6 +286,7 @@ importScript([
 	$(document).ready(function(){
 		GUI.setup(createChart, [
             {"id": "showWaitTime", "name": "Include Wait Time", "type":"boolean", "default": false},
+            {"id": "excludeOutliers", "name": "Exclude Outliers", "type":"boolean", "default": true},
 			{"id":"sampleMin", "name":"Start Date", "type":"time", "default":Date.eod().add("-3week")},
 			{"id":"sampleMax", "name":"End Date", "type":"time", "default":Date.today()},
             {

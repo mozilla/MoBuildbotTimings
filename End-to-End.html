@@ -13,7 +13,7 @@
 <div id="sidebar" layout="tl=window.tl;bottom=footer.bottom;" style="width:0;overflow:hidden;">
     <div id="description" style="padding-left:10px;">
         <h3>About</h3>
-        Show the longest build/test times. All times showing the 90th percentile, the aggregate is a synthetic sum.
+        Show the longest build/test times. All times showing the median, the aggregate is a synthetic sum.
     </div>
     <hr>
     <div id="last-updated" style="text-align: center;width:300px;"></div>
@@ -28,7 +28,7 @@
 </div>
 <div class="content" layout="tr=page.tr;left=sidebar_name.right;bottom=footer.top;">
     <div id="content">
-        <h1 id="title">End-to-End Times</h1>
+        <h1 id="title">End-to-End Times (Median)</h1>
         <h3>Past 7 days of Buildbot jobs</h3>
         <span id="status" style="height:30px">Page Loading...</span><span class="loading"><img src="images/spinner.gif" alt=""></span>
         <div id="chart_area" layout="left=content.left;right=content.center;top=status.bottom;">Please Wait</div>
@@ -122,17 +122,17 @@ importScript([
                         "name": "wait_time",
 //TODO: use the repo.push.date??  What to do with retriggers?
                         "value": {"sub": ["action.start_time", "action.request_time"]},
-                        "aggregate": "percentile", "percentile":0.90
+                        "aggregate": "percentile", "percentile":0.50
                     },
                     {
                         "name": "duration",
                         "value": "action.duration",
-                        "aggregate": "percentile", "percentile":0.90
+                        "aggregate": "percentile", "percentile":0.50
                     },
                     {
                         "name": "end_time",
                         "value": {"sub": ["action.end_time", "action.request_time"]},
-                        "aggregate": "percentile", "percentile":0.90
+                        "aggregate": "percentile", "percentile":0.50
                     }
                 ],
                 "edges": [
@@ -177,17 +177,17 @@ importScript([
                     {
                         "name": "wait_time",
                         "value": {"sub": ["action.start_time", "action.request_time"]},
-                        "aggregate": "percentile", "percentile":0.90
+                        "aggregate": "percentile", "percentile":0.50
                     },
                     {
                         "name": "duration",
                         "value": "action.duration",
-                        "aggregate": "percentile", "percentile":0.90
+                        "aggregate": "percentile", "percentile":0.50
                     },
                     {
                         "name": "end_time",
                         "value": {"sub": ["action.end_time", "action.request_time"]},
-                        "aggregate": "percentile", "percentile":0.90
+                        "aggregate": "percentile", "percentile":0.50
                     }
                 ],
                 "edges": [

@@ -111,7 +111,7 @@ importScript([
 		var typeName = GUI.state.type.getSimpleState();
         var typeFilter = {"or": GUI.state.type.getSelectedParts().select("fullFilter")};
         var testName = GUI.state.test.getSimpleState();
-        var testFilter = {"or": GUI.state.test.getSelectedParts().select("esfilter")};
+        var testFilter = {"or": GUI.state.test.getSelectedParts().select("where")};
         var excludeOutliers = GUI.state.excludeOutliers;
 
 		if (!platformName){
@@ -129,10 +129,9 @@ importScript([
 		}));
 
 		var totalsFilter = {"and":[
-            {"eq": {"action.buildbot_status": "success"}},
             branchFilter,
-			productFilter,
-			platformFilter,
+//			productFilter,
+//			platformFilter,
 			typeFilter,
             testFilter
 		]};
@@ -144,8 +143,8 @@ importScript([
 			"where": {
 				"and": [
 					totalsFilter,
-					{"gte": {"action.start_time": startTime.unix()}},
-					{"lt": {"action.start_time": endTime.unix()}},
+					{"gte": {"task.run.start_time": startTime.unix()}},
+					{"lt": {"task.run.start_time": endTime.unix()}}
 				]
 			},
 			"limit": 1000
@@ -174,7 +173,7 @@ importScript([
                     {"name":"request", "value":"task.run.scheduled"},
                     {"name":"start", "value":"task.run.start_time"},
                     {"name":"end", "value":"task.run.end_time"},
-					{"name":"status", "value":"action.buildbot_status"},
+//					{"name":"status", "value":"action.buildbot_status"},
 					{"name":"duration", "value": duration},
 					{"name":"branch", "value":"build.branch"},
 					{"name":"revision", "value":"build.revision"},
@@ -184,8 +183,8 @@ importScript([
 				"where": {
 					"and": [
 						totalsFilter,
-						{"gte": {"action.start_time": startTime.unix()}},
-						{"lt": {"action.start_time": endTime.unix()}}
+						{"gte": {"task.run.start_time": startTime.unix()}},
+						{"lt": {"task.run.start_time": endTime.unix()}}
 					]
 				},
 				"format": "list",
@@ -252,11 +251,11 @@ importScript([
 			var a = Log.action("get timings", true);
 			try {
 				var details = yield (search({
-					"from": "jobs",
+					"from": "task",
 					"where": {
 						"and": [
 							(d.revision ? {"eq": {"build.revision": d.revision}} : true),
-							{"eq": {"action.start_time": d.start.unix()}},
+							{"eq": {"task.run.start_time": d.start.unix()}},
 							{"eq": {"build.branch": d.branch}},
 							totalsFilter
 						]
@@ -341,7 +340,7 @@ importScript([
                     "id": "test", "name": "Test Suite", "default": "mochitest", "type": PartitionFilter.newInstance({
                     "id": "test",
                     "name": "test",
-                    "dimension": Mozilla.Builds.Test,
+                    "dimension": Mozilla.Builds.TC_Test,
                     "onlyOne": true,
                     "expandAll": true
                 })

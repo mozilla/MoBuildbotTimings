@@ -12,10 +12,10 @@ function* get_tc_times(){
 	var mainFilter = {
 		"and": [
 			{
-				"eq": {
-					"build.product": "firefox",
-					"action.buildbot_status": "success"
-				}
+				"or": [
+					{"missing": "build.product"},
+					{"eq": {"build.product": "firefox"}}
+				]
 			},
 			{
 				"or": [
@@ -123,17 +123,18 @@ function* get_tc_times(){
 				},
 				{
 					"name": "suite",
-					"value": {"tuple":["run.suite.name", "run.suite.flavor"]}
+					"allowNulls": false,
+					"domain": Mozilla.Builds.TC_Test.getActiveDataDomain()
 				}
 			],
 			"where": {
 				"and": [
 					{"exists": "run.suite.name"},
 					mainFilter,
-					{"gt": {"action.start_time": beginPastWeek.unix()}}
+					{"gt": {"task.run.scheduled": beginPastWeek.unix()}}
 				]
 			},
-			"limit": 1000
+			"limit": 10000
 		};
 
 		try {

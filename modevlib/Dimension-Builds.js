@@ -118,6 +118,44 @@ Dimension.addEdges(false, Mozilla, [{
 			"esfilter": {"not": {"contains": {"run.key": "br-haz"}}}
 		},
 
+		{
+			"name": "TC_Test",
+			"partitions": [
+				{"name": "cppunittest", "value": "cppunittest", "esfilter": {"term": {"run.suite.fullname": "cppunittest"}}},
+				{"name": "crashtest", "value": "crashtest", "esfilter": {"term": {"run.suite.fullname": "crashtest"}}},
+				{"name": "external-media-tests", "value": "external-media-tests", "esfilter": {"term": {"run.suite.fullname": "external-media-tests"}}},
+				{"name": "firefox-ui-functional local", "value": "firefox-ui-functional local", "esfilter": {"term": {"run.suite.fullname": "firefox-ui-functional local"}}},
+				{"name": "firefox-ui-functional remote", "value": "firefox-ui-functional remote", "esfilter": {"term": {"run.suite.fullname": "firefox-ui-functional remote"}}},
+				{"name": "gtest", "value": "gtest", "esfilter": {"term": {"run.suite.fullname": "gtest"}}},
+				{"name": "jittest", "value": "jittest", "esfilter": {"term": {"run.suite.fullname": "jittest"}}},
+				{"name": "marionette", "value": "marionette", "esfilter": {"term": {"run.suite.fullname": "marionette"}}},
+				{"name": "mochitest-a11y", "value": "mochitest-a11y", "esfilter": {"term": {"run.suite.fullname": "mochitest-a11y"}}},
+				{"name": "mochitest-browser-chrome", "value": "mochitest-browser-chrome", "esfilter": {"term": {"run.suite.fullname": "mochitest-browser-chrome"}}},
+				{"name": "mochitest-chrome", "value": "mochitest-chrome", "esfilter": {"term": {"run.suite.fullname": "mochitest-chrome"}}},
+				{"name": "mochitest-devtools-chrome", "value": "mochitest-devtools-chrome", "esfilter": {"term": {"run.suite.fullname": "mochitest-devtools-chrome"}}},
+				{"name": "mochitest-gl", "value": "mochitest-gl", "esfilter": {"term": {"run.suite.fullname": "mochitest-gl"}}},
+				{"name": "mochitest-jetpack-package", "value": "mochitest-jetpack-package", "esfilter": {"term": {"run.suite.fullname": "mochitest-jetpack-package"}}},
+				{"name": "mochitest-media", "value": "mochitest-media", "esfilter": {"term": {"run.suite.fullname": "mochitest-media"}}},
+				{"name": "mochitest-plain", "value": "mochitest-plain", "esfilter": {"term": {"run.suite.fullname": "mochitest-plain"}}},
+				{"name": "mochitest-plain-clipboard", "value": "mochitest-plain-clipboard", "esfilter": {"term": {"run.suite.fullname": "mochitest-plain-clipboard"}}},
+				{"name": "mochitest-plain-clipboard,chrome-clipboard,browser-chrome-clipboard,jetpack-package-clipboard", "value": "mochitest-plain-clipboard,chrome-clipboard,browser-chrome-clipboard,jetpack-package-clipboard", "esfilter": {"term": {"run.suite.fullname": "mochitest-plain-clipboard,chrome-clipboard,browser-chrome-clipboard,jetpack-package-clipboard"}}},
+				{"name": "mochitest-plain-gpu", "value": "mochitest-plain-gpu", "esfilter": {"term": {"run.suite.fullname": "mochitest-plain-gpu"}}},
+				{"name": "mochitest-plain-gpu,chrome-gpu,browser-chrome-gpu", "value": "mochitest-plain-gpu,chrome-gpu,browser-chrome-gpu", "esfilter": {"term": {"run.suite.fullname": "mochitest-plain-gpu,chrome-gpu,browser-chrome-gpu"}}},
+				{"name": "reftest", "value": "reftest", "esfilter": {"term": {"run.suite.fullname": "reftest"}}},
+				{"name": "reftest-crashtest", "value": "reftest-crashtest", "esfilter": {"term": {"run.suite.fullname": "reftest-crashtest"}}},
+				{"name": "reftest-jsreftest", "value": "reftest-jsreftest", "esfilter": {"term": {"run.suite.fullname": "reftest-jsreftest"}}},
+				{"name": "reftest-no-accel", "value": "reftest-no-accel", "esfilter": {"term": {"run.suite.fullname": "reftest-no-accel"}}},
+				{"name": "reftest-stylo", "value": "reftest-stylo", "esfilter": {"term": {"run.suite.fullname": "reftest-stylo"}}},
+				{"name": "robocop", "value": "robocop", "esfilter": {"term": {"run.suite.fullname": "robocop"}}},
+				{"name": "web-platform-tests", "value": "web-platform-tests", "esfilter": {"term": {"run.suite.fullname": "web-platform-tests"}}},
+				{"name": "web-platform-tests-reftests", "value": "web-platform-tests-reftests", "esfilter": {"term": {"run.suite.fullname": "web-platform-tests-reftests"}}},
+				{"name": "web-platform-tests-wdspec", "value": "web-platform-tests-wdspec", "esfilter": {"term": {"run.suite.fullname": "web-platform-tests-wdspec"}}},
+				{"name": "xpcshell", "value": "xpcshell", "esfilter": {"term": {"run.suite.fullname": "xpcshell"}}}
+			]
+		}
+
+
+
 	]
 }]);
 

@@ -412,7 +412,7 @@ function post_processing(build_averages,test_averages){
       }
     });
   });
-  return {all_actions:all_actions, build_actions:build_actions};
+  return {"all_actions":all_actions, "build_actions":build_actions};
 }
 
 function get_test_name(part){

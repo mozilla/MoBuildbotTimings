@@ -30,12 +30,16 @@
     <div id="content">
         <h1 id="title">End-to-End Times <span id="status" style="height:30px">Page Loading...</span><span class="loading"><img src="images/spinner.gif" alt=""></span></h1>
         <div id="buildbot" layout="left=content.left;right=content.center;top=status.bottom;">
-            <h3>Past 7 days of Buildbot jobs</h3>
-            <div id="bb_chart">Please Wait...</div>
+            <div class="content">
+                <h3>Past 7 days of Buildbot jobs</h3>
+                <div id="bb_chart">Please Wait...</div>
+
         </div>
         <div id="taskcluster" layout="br=content.br;tl=buildbot.tr;">
-            <h3>Past 7 days of TaskCluster tasks</h3>
-            <div id="tc_chart">Please Wait...</div>
+            <div class="content">
+                <h3>Past 7 days of TaskCluster tasks</h3>
+                <div id="tc_chart">Please Wait...</div>
+            </div>
         </div>
     </div>
 </div>
@@ -80,7 +84,7 @@ importScript([
 
     var __createChart = function*(){
         Thread.run(get_tc_times);
-        Thread.run(get_bb_times);
+//        Thread.run(get_bb_times);
 
         dynamicLayout();
         yield (null);

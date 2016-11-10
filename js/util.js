@@ -27,9 +27,9 @@ var search = function*(query){
 
 	var output = yield (Rest.post({
 
-		url: source.host+"/query",
+		//url: source.host+"/query",
 		//url: "http://52.26.136.54/query",
-		//url: "http://localhost:5000/query",
+		url: "http://localhost:5000/query",
 		json: query
 	}));
 
@@ -78,11 +78,11 @@ function showTimeline(action, timings){
 	var xScale = d3.scaleLinear().domain([action.start_time, action.end_time]).range([20, width - 50]);
 
 	function start(d){
-		return xScale(coalesce(Map.get(d, "harness.start_time"), Map.get(d, "builder.start_time")));
+		return xScale(coalesce(Map.get(d, "harness.start_time"), Map.get(d, "builder.start_time"), Map.get(d, "start_time")));
 	}
 
 	function end(d){
-		return xScale(coalesce(Map.get(d, "harness.end_time"), Map.get(d, "builder.end_time")));
+		return xScale(coalesce(Map.get(d, "harness.end_time"), Map.get(d, "builder.end_time"), Map.get(d, "end_time")));
 	}
 
 	function duration(d){
@@ -145,7 +145,7 @@ function showTimeline(action, timings){
 		.height(HEIGHT - BORDER - BORDER)
 		.append("text")
 		.text(function(d){
-			return coalesce(Map.get(d, "harness.step"), d.builder.step);
+			return coalesce(Map.get(d, "harness.step"), Map.get(d, "builder.step"), d.step);
 		})
 		.y(HEIGHT - (BORDER * 3))
 		.fill('black')
@@ -165,7 +165,7 @@ function showTimeline(action, timings){
 		.append("text")
 		.text(function(d){
 			if (duration(d) < 20 || level(d) == 0) return "";
-			var s = coalesce(Map.get(d, "harness.start_time"), Map.get(d, "builder.start_time"));
+			var s = coalesce(Map.get(d, "harness.start_time"), Map.get(d, "builder.start_time"), Map.get(d, "start_time"));
 			return Duration.newInstance(1000 * (s - action.start_time)).format("HH:mm:ss");
 		})
 		.y(HEIGHT - (BORDER * 3))
@@ -198,8 +198,8 @@ function showTimeline(action, timings){
 							"visibility": "visible"
 						})
 						.html(new Template('{{step}}<br>Duration = {{duration|format("H:mm:ss")}}').expand({
-							"step": coalesce(Map.get(d, "harness.step"), Map.get(d, "builder.step")),
-							"duration": Duration.newInstance(1000 * coalesce(Map.get(d, "harness.duration"), Map.get(d, "builder.duration")))
+							"step": coalesce(Map.get(d, "harness.step"), Map.get(d, "builder.step"), Map.get(d, "step")),
+							"duration": Duration.newInstance(1000 * coalesce(Map.get(d, "harness.duration"), Map.get(d, "builder.duration"), Map.get(d, "duration")))
 						}))
 						;
 				})

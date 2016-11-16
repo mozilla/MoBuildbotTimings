@@ -65,6 +65,38 @@
 		return output;
 	};
 
+	expressions.or = function(expr){
+		var output;
+
+		var exprs = null;
+		if (isArray(expr.or)) {
+			exprs = expr.or.map(qb2function);
+		} else {
+			var k = Map.keys(expr.or)[0];
+			var kk = qb2function(k);
+			var vv = qb2function(expr.add[k]);
+			exprs = [kk, vv];
+		}//endif
+
+		output = function(value){
+			for(var i=0;i<exprs.length;i++){
+				var e = exprs[i];
+				try{
+					var ee = e(value);
+					if (ee!=false && ee!=null) {
+						return true;
+					}//endif
+				}catch(e){
+					//DO NOTHING - EXCEPTIONS ARE null
+				}//try
+			}//for
+			return false;
+		};
+
+		if (DEBUG) output.expression = convert.value2json(expr);
+		return output;
+	};
+
 	expressions.sub = function(expr){
 		var output;
 		if (isArray(expr.sub)) {

@@ -1,0 +1,362 @@
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<HTML>
+<HEAD>
+	<script type="text/javascript" src="modevlib/imports/import.js"></script>
+    <link type="text/css" rel="stylesheet" href="css/menu.css"/>
+</HEAD>
+<BODY>
+
+
+<div id="sidebar" layout="tl=page.tl;" style="width:0;overflow:hidden;">
+	<div id="description" style="padding-left:10px;">
+		<h3>About</h3>
+		Specific build times.  Click on the chart for a timeline of the build selected.
+	</div>
+	<hr>
+	<div id="last-updated" style="text-align: center;width:300px;"></div>
+	<hr>
+	<div id="filters" style="width:300px;" class="menu">
+	</div>
+	<hr>
+	<div id="parameters">
+	</div>
+</div>
+<div id="sidebar_name" class="sidebar_name" layout="top=window.top;bottom=footer.top;left=sidebar.right;">
+	<div>Configuration</div>
+</div>
+<div class="content" layout="top=page.top;left=sidebar_name.right;right=window.right;" style="padding: 10px 10px 50px 10px;">
+	<div id="header">
+		<div id="title">Test Times</div>
+		<span id="status" style="height:30px">Page Loading...</span>
+		<span class="loading"><img src="images/spinner.gif" alt=""></span>
+	</div>
+	<div id="breakdown">
+		<div id="chart_area" class="chart" style="width:800px;height:300px;">Please Wait</div>
+		<div id="details"></div>
+		<div id="timeline" style="width:800px;height:200px;"></div>
+		<div id="raw_activedata"></div>
+	</div>
+</div>
+<div id="footer" style="height:50px;text-align: center;padding: 5px 0 5px 0;background-color: #fff;z-index: 12;" layout="bl=window.bl;br=window.br;">
+	Source at <a href="https://github.com/mozilla/MoBuildbotTimings">https://github.com/mozilla/MoBuildbotTimings</a><br>
+	Wiki <a href="https://wiki.mozilla.org/Auto-tools/Projects/DevelopmentMetrics">https://wiki.mozilla.org/Auto-tools/Projects/DevelopmentMetrics</a>
+</div>
+
+
+
+<script type="application/javascript">
+importScript([
+	'modevlib/main.js',
+	'js/util.js',
+	'modevlib/layouts/layout.js',
+	'modevlib/charts/mgChart.js',
+	'modevlib/Dimension-Builds.js'
+], function(){
+	layoutAll();
+	sidebarSlider();
+
+	var HOVER = new Template(
+			'<b>{{status|upper}}</b><br>' +
+			'<b>Branch :</b>{{branch}}<br>'+
+			'<b>Revision :</b>{{revision|left(12)}}<br>' +
+			'<b>Start Time :</b>{{start|format("MMM dd, HH:mm")}}<br>' +
+            '<b>Duration :</b>{{duration|round(3)}} minutes<br>' +
+            '<b>Chunk :</b>{{chunk}}'
+	);
+
+	var DETAIL = new Template([
+		'<div style="position:relative;width:800px;padding:10px;">'+
+		'<table id="properties" style="width:100%;">',
+		'<tr>' +
+		'   <td style="text-align: right;"><b>{{status|upper}} :</b></td>' +
+		'   <td style="text-align: left;">&nbsp;<b>{{branch}}</b> rev {{revision|left(12)}}</td>' +
+		'   <td rowspan="3" style="text-align: right"><a class="button" href="#" onClick=\'openTreeherder({{branch|quote}}, {{revision|quote}}, {{start|unix}}, {{buildername|quote}}, undefined)\'>Go to Treeherder</a></td>'+
+		'</tr>'+
+		'<tr>' +
+		'   <td style="text-align: right;"><b>Start Time :</b></td>' +
+		'   <td style="text-align: left;">&nbsp;{{start|format("MMM dd, HH:mm")}}</td>' +
+		'</tr>' +
+		'</table>' +
+		'</div>'
+	]);
+
+	var RECORD = new Template([
+		'<h3>ActiveData Record</h3>',
+		'<div class="padding"><div class="code" style="width:760px;height:400px;border: 1px solid black; overflow: scroll;">{{json}}</div></div>'
+	]);
+
+	var thread;
+	var detailThread;
+
+	var createChart = function(){
+		if (thread !== undefined)
+			thread.kill();
+		thread = Thread.run(__createChart());
+	};
+
+	var __createChart = function*(){
+
+		var startTime = Date.newInstance(GUI.state.sampleMin);
+		var endTime = Date.newInstance(GUI.state.sampleMax);
+        var branchName = coalesce(GUI.state.branch.getSimpleState(), "All Branches");
+        var selectedBranches = GUI.state.branch.getSelectedParts();
+   		var branchFilter = selectedBranches.length>0 ? {"or": GUI.state.branch.getSelectedParts().select("fullFilter")} : true;
+        var platformName = GUI.state.platform.getSimpleState();
+        var platformFilter = {"or": GUI.state.platform.getSelectedParts().select("fullFilter")};
+		var productName = GUI.state.product.getSimpleState();
+		var productFilter = {"or": GUI.state.product.getSelectedParts().select("fullFilter")};
+		var typeName = GUI.state.type.getSimpleState();
+        var typeFilter = {"or": GUI.state.type.getSelectedParts().select("fullFilter")};
+        var testName = GUI.state.test.getSimpleState();
+        var testFilter = {"or": GUI.state.test.getSelectedParts().select("esfilter")};
+        var excludeOutliers = GUI.state.excludeOutliers;
+
+		if (!platformName){
+			$("#title").html("Expecting a platform");
+			yield (null);
+		}//endif
+
+		$("#title").html(new Template("<h1>{{test|camel}}</h1><h3>{{platform}} ({{type}}) on {{branch}} {{note}}</h3>").expand({
+			"type": typeName,
+			"product": productName,
+			"platform": platformName,
+            "test": testName,
+            "branch": branchName,
+            "note": GUI.state.showWaitTime ? "(includes wait times)" : ""
+		}));
+
+		var totalsFilter = {"and":[
+            {"eq": {"action.buildbot_status": "success"}},
+            branchFilter,
+			productFilter,
+			platformFilter,
+			typeFilter,
+            testFilter
+		]};
+
+		//SUMMARY OF BUILD TIMES SINCE minDate
+		var query = {
+			"from": "jobs",
+			"select": {"aggregate":"count"},
+			"where": {
+				"and": [
+					totalsFilter,
+					{"gte": {"action.start_time": startTime.unix()}},
+					{"lt": {"action.start_time": endTime.unix()}},
+				]
+			},
+			"limit": 1000
+		};
+		var a=Log.action("Get summary", true);
+		try {
+			var count = yield (search(query));
+		}catch (e){
+			Log.error("problem with call to ActiveData", e)
+		}finally{
+			Log.actionDone(a);
+		}//try
+
+        var duration = {"div": {"action.duration": 60}, "default": 0};
+        if (GUI.state.showWaitTime){
+            duration = {"div":[{"sub":["action.end_time", "action.request_time"]}, 60], "default":0}
+        }//endif
+
+		a = Log.action("Loading "+count.data.count+" tests", true);
+		try{
+			var details = yield (search({
+				"from":"jobs",
+				"select":[
+                    {"name":"request", "value":"action.request_time"},
+                    {"name":"start", "value":"action.start_time"},
+                    {"name":"end", "value":"action.end_time"},
+					{"name":"status", "value":"action.buildbot_status"},
+					{"name":"duration", "value": duration},
+					{"name":"branch", "value":"build.branch"},
+					{"name":"revision", "value":"build.revision"},
+                    {"name":"pool", "value":"run.machine.pool"},
+                    {"name":"chunk", "value":{"coalesce":[{"string": "run.chunk"}, {"literal": "-"}]}},
+                    {"name":"buildername", "value":"run.key"}
+				],
+				"where": {
+					"and": [
+						totalsFilter,
+						{"gte": {"action.start_time": startTime.unix()}},
+						{"lt": {"action.start_time": endTime.unix()}}
+					]
+				},
+				"format": "list",
+				"limit": 100000
+			}))
+		}finally{
+			Log.actionDone(a);
+		}//try
+
+		details.data.forall(function(d){
+			d.start=Date.newInstance(d.start);
+		});
+
+
+		$("#chart_area").html("");
+		aChart.showScatter({
+			"target": "chart_area",
+			"hover":{"format": "{{duration|format('h:mm')}}"},
+			"data": details.data,
+			"tip":{
+				"format": HOVER
+			},
+			"series":[
+				{
+					"name": "Chunk",
+					"value": "chunk",
+					"axis": "color"
+				}
+			],
+			"axis": {
+				"x": {
+					"value":"start",
+					"format":"{{.|format('NNN dd, HH:mm')}}",
+					"size": 50
+				},
+				"y": {
+					"value":"duration",
+                    "range": {
+                        "max": excludeOutliers ? aChart.maxNice(details.data.select("duration")) : null
+                    }
+				},
+				"color": {
+					"missing": {"style": {"color": "red"}},
+					"domain": {
+						"type": "set",
+						"partitions": Array.union(details.data.select("chunk"))
+					}
+				}
+			},
+			"click": function(d){
+				clickDetails(d, totalsFilter)
+			}
+		});
+	};//function
+
+	function clickDetails(d, totalsFilter){
+		$('#details').html(DETAIL.expand(d));
+		layoutAll();
+
+		detailThread = Thread.run(function*(){
+			$("#raw_activedata").html("");
+			$("#timeline").html("");
+
+			var a = Log.action("get timings", true);
+			try {
+				var details = yield (search({
+					"from": "jobs",
+					"where": {
+						"and": [
+							(d.revision ? {"eq": {"build.revision": d.revision}} : true),
+							{"eq": {"action.start_time": d.start.unix()}},
+							{"eq": {"build.branch": d.branch}},
+							totalsFilter
+						]
+					},
+					"format": "list",
+					"limit": 100
+				}));
+			}finally{
+				Log.actionDone(a);
+			}//try
+
+			var action = details.data[0].action;
+			if (action.timings!==undefined){
+				var timings = qb.sort(action.timings, "order");
+				action.timings = timings;
+			}//endif
+			if (Thread.currentThread===detailThread) {
+				//ONLY UPDATE IF THIS IS STILL THE LAST ONE CLICKED
+				details.data.forall(function(d){d.action.timings=undefined;});
+				$("#raw_activedata").html(RECORD.expand({"json": convert.String2HTML(convert.value2json(Array.unwrap(details.data)))}));
+				showTimeline(action, timings);
+			}//endif
+		});
+	}
+
+
+	Thread.showWorking = function(numThread){
+		var l = $(".loading");
+		l.show();
+	};//function
+
+	Thread.hideWorking = function(){
+		var l = $(".loading");
+		l.hide();
+	};//function
+
+    $(document).ready(function(){
+        GUI.setup(
+            createChart,
+            [
+                {"id": "showWaitTime", "name": "Include Wait Time", "type":"boolean", "default": false},
+                {"id": "excludeOutliers", "name": "Exclude Outliers", "type":"boolean", "default": true},
+                {"id": "sampleMin", "name": "Start Date", "type": "time", "default": Date.eod().add("-3week")},
+                {"id": "sampleMax", "name": "End Date", "type": "time", "default": Date.today()},
+                {
+                    "id": "branch", "name": "Branch", "default":"try", "type": PartitionFilter.newInstance({
+                    "id": "branch",
+                    "name": "branch",
+                    "dimension": Mozilla.Builds.Branch,
+                    "onlyOne": false,
+                    "expandAll": true
+                })
+                },
+                {
+                    "id": "platform", "name": "Platform", "type": PartitionFilter.newInstance({
+                    "id": "platform",
+                    "name": "platform",
+                    "dimension": Mozilla.Builds.Platform,
+                    "onlyOne": true,
+                    "expandAll": true
+                })
+                },
+                {
+                    "id": "type", "name": "Build Type", "default": "Standard", "type": PartitionFilter.newInstance({
+                    "id": "type",
+                    "name": "type",
+                    "dimension": Mozilla.Builds.Type,
+                    "onlyOne": true,
+                    "expandAll": true
+                })
+                },
+                {
+                    "id": "product", "name": "Product", "default": "Firefox", "type": PartitionFilter.newInstance({
+                    "id": "product",
+                    "name": "product",
+                    "dimension": Mozilla.Builds.Product,
+                    "onlyOne": true,
+                    "expandAll": true
+                })
+                },
+                {
+                    "id": "test", "name": "Test Suite", "default": "mochitest", "type": PartitionFilter.newInstance({
+                    "id": "test",
+                    "name": "test",
+                    "dimension": Mozilla.Builds.Test,
+                    "onlyOne": true,
+                    "expandAll": true
+                })
+                }
+            ],
+            [],
+            "",
+            false
+        );
+    });
+
+});
+
+</script>
+
+
+</BODY>
+</HTML>
+

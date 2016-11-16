@@ -30,15 +30,60 @@ Dimension.addEdges(false, Mozilla, [{
 				{"name": "Debug", "ordering": 3, "style": {"color": "#f6b26b"}, "value": "debug", "esfilter": {"term": {"build.type": "debug"}}}
 			]
 		},
+		{"name": "Product", "field": "build.product",
+			"partitions": [
+				{"name": "Firefox", "style": {"color": "#de4815"}, "value": "firefox", "esfilter": {"term": {"build.product": "firefox"}}}
+			]
+		},
+		{
+			"name": "BB_Platform",
+			"field": "build.platform",
+
+			"partitions": [
+				{"name": "Linux32", "style": {"color": "#de4815"}, "value": "linux32", "esfilter": {"term": {"build.platform": "linux32"}}},
+				{"name": "Linux64", "style": {"color": "#de4815"}, "value": "linux64", "esfilter": {"term": {"build.platform": "linux64"}}},
+				{"name": "OSX64", "style": {"color": "#a4c739"}, "value": "macosx64", "esfilter": {"term": {"build.platform": "macosx64"}}},
+				{"name": "WINNT 5.2", "style": {"color": "#de4815"}, "value": "win5", "esfilter": {"prefix": {"build.name": "WINNT 5.2"}}},
+				{"name": "WINNT 6.1 x86-64", "style": {"color": "#de4815"}, "value": "win6", "esfilter": {"prefix": {"build.name": "WINNT 6.1 x86-64"}}},
+				{"name": "Windows XP 32-bit", "style": {"color": "#de4815"}, "value": "winxp", "esfilter": {"prefix": {"build.name": "Windows XP 32-bit"}}},
+				{"name": "Windows 7 32-bit", "style": {"color": "#de4815"}, "value": "win732", "esfilter": {"prefix": {"build.name": "Windows 7 32-bit"}}},
+				{"name": "Windows 7 VM 32-bit", "style": {"color": "#de4815"}, "value": "win732vm", "esfilter": {"prefix": {"build.name": "Windows 7 VM 32-bit"}}},
+				{"name": "Windows 7 VM-GFX 32-bit", "style": {"color": "#de4815"}, "value": "win732gfx", "esfilter": {"prefix": {"build.name": "Windows 7 VM-GFX 32-bit"}}},
+				{"name": "Windows 8 64-bit", "style": {"color": "#de4815"}, "value": "win864", "esfilter": {"prefix": {"build.name": "Windows 8 64-bit"}}},
+				{"name": "Windows 10 64-bit", "style": {"color": "#de4815"}, "value": "win1064", "esfilter": {"prefix": {"build.name": "Windows 10 64-bit"}}}
+			],
+			"esfilter": {"not": {"contains": {"run.key": "br-haz"}}}
+		},
 		{
 			"name": "Platform",
+			"field": "build.platform",
+
+			"partitions": [
+				{"name": "Linux32", "style": {"color": "#de4815"}, "value": "linux32", "esfilter": {"term": {"build.platform": "linux32"}}},
+				{"name": "Linux64", "style": {"color": "#de4815"}, "value": "linux64", "esfilter": {"term": {"build.platform": "linux64"}}},
+				{"name": "OSX64", "style": {"color": "#a4c739"}, "value": "macosx64", "esfilter": {"term": {"build.platform": "macosx64"}}},
+				{"name": "win32", "style": {"color": "#de4815"}, "value": "win32", "esfilter": {"term": {"build.platform": "win32"}}},
+				{"name": "win64", "style": {"color": "#de4815"}, "value": "win64", "esfilter": {"term": {"build.platform": "win64"}}}
+			],
+			"esfilter": {"not": {"contains": {"run.key": "br-haz"}}}
+		},
+		{
+			"name": "TC_Platform",
 			"field": "build.platform",
 			"partitions": [
 				{"name": "Linux32", "style": {"color": "#de4815"}, "value": "linux32", "esfilter": {"term": {"build.platform": "linux32"}}},
 				{"name": "Linux64", "style": {"color": "#de4815"}, "value": "linux64", "esfilter": {"term": {"build.platform": "linux64"}}},
 				{"name": "OSX64", "style": {"color": "#a4c739"}, "value": "macosx64", "esfilter": {"term": {"build.platform": "macosx64"}}},
 				{"name": "Windows32", "style": {"color": "#136bab"}, "value": "win32", "esfilter": {"term": {"build.platform": "win32"}}},
-				{"name": "Windows64", "style": {"color": "#136bab"}, "value": "win64", "esfilter": {"term": {"build.platform": "win64"}}}
+				{"name": "Windows64", "style": {"color": "#136bab"}, "value": "win64", "esfilter": {"term": {"build.platform": "win64"}}},
+				{"name": "windowsxp", "style": {"color": "#136bab"}, "value": "winxp", "esfilter": {"term": {"build.platform": "windowsxp"}}},
+				{"name": "windows7-32", "style": {"color": "#136bab"}, "value": "win732", "esfilter": {"term": {"build.platform": "windows7-32"}}},
+				{"name": "windows7-32-vm", "style": {"color": "#136bab"}, "value": "win732vn", "esfilter": {"term": {"build.platform": "windows7-32-vm"}}},
+				{"name": "windows8-64", "style": {"color": "#136bab"}, "value": "win864", "esfilter": {"term": {"build.platform":"windows8-64" }}},
+				{"name": "windows10-64", "style": {"color": "#136bab"}, "value": "win1064", "esfilter": {"term": {"build.platform": "windows10-64"}}},
+				{"name": "windows10-64-vm", "style": {"color": "#136bab"}, "value": "win1064vm", "esfilter": {"term": {"build.platform": "windows10-64-vm"}}},
+				{"name": "windows2012-32", "style": {"color": "#136bab"}, "value": "win1232", "esfilter": {"in": {"build.platform": ["windows-2012-32", "windows2012-32"]}}},
+				{"name": "windows2012-64", "style": {"color": "#136bab"}, "value": "win2164", "esfilter": {"term": {"build.platform":"windows2012-64" }}}
 			],
 			"esfilter": {"not": {"contains": {"run.key": "br-haz"}}}
 		},
@@ -117,6 +162,44 @@ Dimension.addEdges(false, Mozilla, [{
 			],
 			"esfilter": {"not": {"contains": {"run.key": "br-haz"}}}
 		},
+
+		{
+			"name": "TC_Test",
+			"partitions": [
+				{"name": "cppunittest", "value": "cppunittest", "esfilter": {"term": {"run.suite.fullname": "cppunittest"}}},
+				{"name": "crashtest", "value": "crashtest", "esfilter": {"term": {"run.suite.fullname": "crashtest"}}},
+				{"name": "external-media-tests", "value": "external-media-tests", "esfilter": {"term": {"run.suite.fullname": "external-media-tests"}}},
+				{"name": "firefox-ui-functional local", "value": "firefox-ui-functional local", "esfilter": {"term": {"run.suite.fullname": "firefox-ui-functional local"}}},
+				{"name": "firefox-ui-functional remote", "value": "firefox-ui-functional remote", "esfilter": {"term": {"run.suite.fullname": "firefox-ui-functional remote"}}},
+				{"name": "gtest", "value": "gtest", "esfilter": {"term": {"run.suite.fullname": "gtest"}}},
+				{"name": "jittest", "value": "jittest", "esfilter": {"term": {"run.suite.fullname": "jittest"}}},
+				{"name": "marionette", "value": "marionette", "esfilter": {"term": {"run.suite.fullname": "marionette"}}},
+				{"name": "mochitest-a11y", "value": "mochitest-a11y", "esfilter": {"term": {"run.suite.fullname": "mochitest-a11y"}}},
+				{"name": "mochitest-browser-chrome", "value": "mochitest-browser-chrome", "esfilter": {"term": {"run.suite.fullname": "mochitest-browser-chrome"}}},
+				{"name": "mochitest-chrome", "value": "mochitest-chrome", "esfilter": {"term": {"run.suite.fullname": "mochitest-chrome"}}},
+				{"name": "mochitest-devtools-chrome", "value": "mochitest-devtools-chrome", "esfilter": {"term": {"run.suite.fullname": "mochitest-devtools-chrome"}}},
+				{"name": "mochitest-gl", "value": "mochitest-gl", "esfilter": {"term": {"run.suite.fullname": "mochitest-gl"}}},
+				{"name": "mochitest-jetpack-package", "value": "mochitest-jetpack-package", "esfilter": {"term": {"run.suite.fullname": "mochitest-jetpack-package"}}},
+				{"name": "mochitest-media", "value": "mochitest-media", "esfilter": {"term": {"run.suite.fullname": "mochitest-media"}}},
+				{"name": "mochitest-plain", "value": "mochitest-plain", "esfilter": {"term": {"run.suite.fullname": "mochitest-plain"}}},
+				{"name": "mochitest-plain-clipboard", "value": "mochitest-plain-clipboard", "esfilter": {"term": {"run.suite.fullname": "mochitest-plain-clipboard"}}},
+				{"name": "mochitest-plain-clipboard,chrome-clipboard,browser-chrome-clipboard,jetpack-package-clipboard", "value": "mochitest-plain-clipboard,chrome-clipboard,browser-chrome-clipboard,jetpack-package-clipboard", "esfilter": {"term": {"run.suite.fullname": "mochitest-plain-clipboard,chrome-clipboard,browser-chrome-clipboard,jetpack-package-clipboard"}}},
+				{"name": "mochitest-plain-gpu", "value": "mochitest-plain-gpu", "esfilter": {"term": {"run.suite.fullname": "mochitest-plain-gpu"}}},
+				{"name": "mochitest-plain-gpu,chrome-gpu,browser-chrome-gpu", "value": "mochitest-plain-gpu,chrome-gpu,browser-chrome-gpu", "esfilter": {"term": {"run.suite.fullname": "mochitest-plain-gpu,chrome-gpu,browser-chrome-gpu"}}},
+				{"name": "reftest", "value": "reftest", "esfilter": {"term": {"run.suite.fullname": "reftest"}}},
+				{"name": "reftest-crashtest", "value": "reftest-crashtest", "esfilter": {"term": {"run.suite.fullname": "reftest-crashtest"}}},
+				{"name": "reftest-jsreftest", "value": "reftest-jsreftest", "esfilter": {"term": {"run.suite.fullname": "reftest-jsreftest"}}},
+				{"name": "reftest-no-accel", "value": "reftest-no-accel", "esfilter": {"term": {"run.suite.fullname": "reftest-no-accel"}}},
+				{"name": "reftest-stylo", "value": "reftest-stylo", "esfilter": {"term": {"run.suite.fullname": "reftest-stylo"}}},
+				{"name": "robocop", "value": "robocop", "esfilter": {"term": {"run.suite.fullname": "robocop"}}},
+				{"name": "web-platform-tests", "value": "web-platform-tests", "esfilter": {"term": {"run.suite.fullname": "web-platform-tests"}}},
+				{"name": "web-platform-tests-reftests", "value": "web-platform-tests-reftests", "esfilter": {"term": {"run.suite.fullname": "web-platform-tests-reftests"}}},
+				{"name": "web-platform-tests-wdspec", "value": "web-platform-tests-wdspec", "esfilter": {"term": {"run.suite.fullname": "web-platform-tests-wdspec"}}},
+				{"name": "xpcshell", "value": "xpcshell", "esfilter": {"term": {"run.suite.fullname": "xpcshell"}}}
+			]
+		}
+
+
 
 	]
 }]);

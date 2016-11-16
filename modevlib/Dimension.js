@@ -27,8 +27,7 @@ var DEFAULT_QUERY_LIMIT = 20;
 			};
 
 			if (this.partitions) {
-				output.partitions = this.partitions.map(function(v, i){
-					if (i >= coalesce(self.limit, DEFAULT_QUERY_LIMIT)) return undefined;
+				output.partitions = this.partitions.mapExists(function(v, i){
 					v.style = coalesce(v.style, {});
 					var output = clonePart(v);
 					output.where = coalesce(v.esfilter, v.where);

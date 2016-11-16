@@ -7,6 +7,17 @@ importScript("buildbot.js");
 
 function* get_tc_times(){
 	var BAR_HEIGHT = 30;
+	var BAR_SPACING = "20%";
+	var END_TIME_FIELD = "task.action.end_time";
+
+
+	var CHART_MULTIPLE=1.0;
+	if (BAR_SPACING.right(1) == "%") {
+		CHART_MULTIPLE = 1 + convert.String2Integer(BAR_SPACING.leftBut(1)) / 100;
+	} else if (BAR_SPACING.right(2) == "px") {
+		CHART_MULTIPLE = 1 + convert.String2Integer(BAR_SPACING.leftBut(2)) / BAR_HEIGHT;
+	}//endif
+
 	var beginPastWeek = Date.today().add("-week");
 
 	var mainFilter = {
@@ -45,12 +56,12 @@ function* get_tc_times(){
 				},
 				{
 					"name": "duration",
-					"value": {"sub": ["task.run.end_time", "task.run.start_time"]},
+					"value": {"sub": [END_TIME_FIELD, "task.run.start_time"]},
 					"aggregate": "percentile", "percentile": 0.50
 				},
 				{
 					"name": "end_time",
-					"value": {"sub": ["task.run.end_time", "task.run.scheduled"]},
+					"value": {"sub": [END_TIME_FIELD, "task.run.scheduled"]},
 					"aggregate": "percentile", "percentile": 0.50
 				}
 			],
@@ -101,12 +112,12 @@ function* get_tc_times(){
 				},
 				{
 					"name": "duration",
-					"value": {"sub": ["task.run.end_time", "task.run.start_time"]},
+					"value": {"sub": [END_TIME_FIELD, "task.run.start_time"]},
 					"aggregate": "percentile", "percentile": 0.50
 				},
 				{
 					"name": "end_time",
-					"value": {"sub": ["task.run.end_time", "task.run.scheduled"]},
+					"value": {"sub": [END_TIME_FIELD, "task.run.scheduled"]},
 					"aggregate": "percentile", "percentile": 0.50
 				}
 			],
@@ -154,12 +165,12 @@ function* get_tc_times(){
     var all_actions = timings.all_actions;
 	var build_actions = timings.build_actions;
 
-	$("#tc_chart").height(build_actions.length * BAR_HEIGHT);
+	$("#tc_chart").height(build_actions.length * BAR_HEIGHT* CHART_MULTIPLE);
 
 	var chart = gantt({
 		"target": "tc_chart",
 		"data": all_actions,
-		"style": {"height": build_actions.length * BAR_HEIGHT},
+		"style": {"height": build_actions.length * BAR_HEIGHT* CHART_MULTIPLE},
 		"axis": {
 			"x": {
 				"label": "Time",
@@ -179,7 +190,7 @@ function* get_tc_times(){
 				"style": {
 					"color": "#7f7f7f",
 					"opacity": 0.3,
-					"style": {"bar-spacing": "20%"}
+					"style": {"bar-spacing": BAR_SPACING}
 				},
 				"select": [
 					{"name": "x", "range": {"min": "build_request_time", "max": "build_start_time"}},
@@ -265,7 +276,7 @@ function* get_tc_times(){
 		domain = qb.sort(Array.UNION([domain, data.tests.select("index")]), ".");
 		if (domain.subtract(old_domain).length == 0) domain = build_actions;
 		chart.axis.y.domain._scale.domain(domain);
-		chart.style.height = domain.length * BAR_HEIGHT;
+		chart.style.height = domain.length * BAR_HEIGHT* CHART_MULTIPLE;
 		dynamicLayout();
 	}
 

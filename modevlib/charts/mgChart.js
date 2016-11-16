@@ -209,6 +209,21 @@ importScript("tools.js");
 			Log.note(convert.value2json(data));
 		}//endif
 
+
+		data.forall(function(d){
+			if (d.duration==null || d.start==null){
+				Log.error("");
+			}//endif
+			data.forall(function(e){
+				if (e!==d && e.duration==d.duration && e.start== d.start){
+					Log.error("same")
+				}
+
+			});
+
+		});
+
+
 		var chartParams = {
 			title: Map.get(params, "title.label"),
 			description: Map.get(params, "title.description"),

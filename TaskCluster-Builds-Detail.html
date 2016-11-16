@@ -13,7 +13,7 @@
 <div id="sidebar" layout="tl=page.tl;" style="width:0;overflow:hidden;">
 	<div id="description" style="padding-left:10px;">
 		<h3>About</h3>
-		Specific build times.  Click on the chart for a timeline of the build selected.
+		TaskCluster build times.  Click on the chart for a timeline of the build selected.
 	</div>
 	<hr>
 	<div id="last-updated" style="text-align: center;width:300px;"></div>
@@ -29,7 +29,7 @@
 </div>
 <div class="content" layout="top=page.top;left=sidebar_name.right;right=window.right;" style="padding: 10px 10px 50px 10px;">
 	<div id="header">
-		<div id="title">Test Times</div>
+		<div id="title">Build Times</div>
 		<span id="status" style="height:30px">Page Loading...</span>
 		<span class="loading"><img src="images/spinner.gif" alt=""></span>
 	</div>
@@ -63,8 +63,7 @@ importScript([
 			'<b>Branch :</b>{{branch}}<br>'+
 			'<b>Revision :</b>{{revision|left(12)}}<br>' +
 			'<b>Start Time :</b>{{start|format("MMM dd, HH:mm")}}<br>' +
-            '<b>Duration :</b>{{duration|round(3)}} minutes<br>' +
-            '<b>Chunk :</b>{{chunk}}'
+			'<b>Duration :</b>{{duration|round(3)}} minutes'
 	);
 
 	var DETAIL = new Template([
@@ -73,7 +72,7 @@ importScript([
 		'<tr>' +
 		'   <td style="text-align: right;"><b>{{status|upper}} :</b></td>' +
 		'   <td style="text-align: left;">&nbsp;<b>{{branch}}</b> rev {{revision|left(12)}}</td>' +
-		'   <td rowspan="3" style="text-align: right"><a class="button" href="#" onClick=\'openTreeherder({{branch|quote}}, {{revision|quote}}, {{start|unix}}, {{buildername|quote}}, undefined)\'>Go to Treeherder</a></td>'+
+		'   <td rowspan="3" style="text-align: right"><a class="button" href="#" onClick=\'openTreeherder({{branch|quote}}, {{revision|quote}}, {{start|unix}}, undefined, {{task_id|quote}})\'>Go to Treeherder</a></td>'+
 		'</tr>'+
 		'<tr>' +
 		'   <td style="text-align: right;"><b>Start Time :</b></td>' +
@@ -99,6 +98,8 @@ importScript([
 
 	var __createChart = function*(){
 
+        var END_TIME_FIELD = "task.action.end_time";
+
 		var startTime = Date.newInstance(GUI.state.sampleMin);
 		var endTime = Date.newInstance(GUI.state.sampleMax);
         var branchName = coalesce(GUI.state.branch.getSimpleState(), "All Branches");
@@ -109,9 +110,7 @@ importScript([
 		var productName = GUI.state.product.getSimpleState();
 		var productFilter = {"or": GUI.state.product.getSelectedParts().select("fullFilter")};
 		var typeName = GUI.state.type.getSimpleState();
-        var typeFilter = {"or": GUI.state.type.getSelectedParts().select("fullFilter")};
-        var testName = GUI.state.test.getSimpleState();
-        var testFilter = {"or": GUI.state.test.getSelectedParts().select("esfilter")};
+		var typeFilter = {"or": GUI.state.type.getSelectedParts().select("fullFilter")};
         var excludeOutliers = GUI.state.excludeOutliers;
 
 		if (!platformName){
@@ -119,33 +118,31 @@ importScript([
 			yield (null);
 		}//endif
 
-		$("#title").html(new Template("<h1>{{test|camel}}</h1><h3>{{platform}} ({{type}}) on {{branch}} {{note}}</h3>").expand({
+		$("#title").html(new Template("<h1>{{product}} Build Times</h1><h3>{{platform}} {{type}} on {{branch}} {{note}}</h3>").expand({
 			"type": typeName,
 			"product": productName,
 			"platform": platformName,
-            "test": testName,
             "branch": branchName,
             "note": GUI.state.showWaitTime ? "(includes wait times)" : ""
 		}));
 
 		var totalsFilter = {"and":[
-            {"eq": {"action.buildbot_status": "success"}},
+			{"missing": "run.suite.name"},
             branchFilter,
 			productFilter,
 			platformFilter,
-			typeFilter,
-            testFilter
+			typeFilter
 		]};
 
 		//SUMMARY OF BUILD TIMES SINCE minDate
 		var query = {
-			"from": "jobs",
+			"from": "task",
 			"select": {"aggregate":"count"},
 			"where": {
 				"and": [
 					totalsFilter,
-					{"gte": {"action.start_time": startTime.unix()}},
-					{"lt": {"action.start_time": endTime.unix()}},
+					{"gte": {"task.run.start_time": startTime.unix()}},
+					{"lt": {"task.run.start_time": endTime.unix()}}
 				]
 			},
 			"limit": 1000
@@ -159,32 +156,33 @@ importScript([
 			Log.actionDone(a);
 		}//try
 
-        var duration = {"div": {"action.duration": 60}, "default": 0};
-        if (GUI.state.showWaitTime){
-            duration = {"div":[{"sub":["action.end_time", "action.request_time"]}, 60], "default":0}
+        var duration;
+        if (GUI.state.showWaitTime) {
+            duration = {"div": [{"sub": [END_TIME_FIELD, "task.run.scheduled"]}, 60], "default": 0}
+        }else{
+            duration = {"div": [{"sub": [END_TIME_FIELD, "task.run.start_time"]}, 60], "default": 0}
         }//endif
 
-		a = Log.action("Loading "+count.data.count+" tests", true);
+		a = Log.action("Loading "+count.data.count+" builds", true);
 		try{
 			var details = yield (search({
-				"from":"jobs",
+				"from":"task",
 				"select":[
-                    {"name":"request", "value":"action.request_time"},
-                    {"name":"start", "value":"action.start_time"},
-                    {"name":"end", "value":"action.end_time"},
-					{"name":"status", "value":"action.buildbot_status"},
+                    {"name":"request", "value":"task.run.scheduled"},
+					{"name":"start", "value":"task.run.start_time"},
+                    {"name":"end", "value":END_TIME_FIELD},
+					{"name":"status", "value":"task.run.status"},
 					{"name":"duration", "value": duration},
 					{"name":"branch", "value":"build.branch"},
 					{"name":"revision", "value":"build.revision"},
-                    {"name":"pool", "value":"run.machine.pool"},
                     {"name":"chunk", "value":{"coalesce":[{"string": "run.chunk"}, {"literal": "-"}]}},
-                    {"name":"buildername", "value":"run.key"}
+                    {"name":"task_id", "value":"task.id"}
 				],
 				"where": {
 					"and": [
 						totalsFilter,
-						{"gte": {"action.start_time": startTime.unix()}},
-						{"lt": {"action.start_time": endTime.unix()}}
+						{"gte": {"task.run.start_time": startTime.unix()}},
+						{"lt": {"task.run.start_time": endTime.unix()}}
 					]
 				},
 				"format": "list",
@@ -202,16 +200,20 @@ importScript([
 		$("#chart_area").html("");
 		aChart.showScatter({
 			"target": "chart_area",
-			"hover":{"format": "{{duration|format('h:mm')}}"},
+			"hover":{"format": "{{duration|round(3)}}minutes"},
 			"data": details.data,
 			"tip":{
 				"format": HOVER
 			},
 			"series":[
 				{
-					"name": "Chunk",
-					"value": "chunk",
-					"axis": "color"
+					"name": "Branch",
+					"value": {
+						"when": {"or":[{"missing":status}, {"eq": {"status": "success"}}]},
+						"then": "branch",
+						"else": "success"
+					},
+					"axis":"color",
 				}
 			],
 			"axis": {
@@ -230,7 +232,7 @@ importScript([
 					"missing": {"style": {"color": "red"}},
 					"domain": {
 						"type": "set",
-						"partitions": Array.union(details.data.select("chunk"))
+						"partitions": Array.union(details.data.select("branch"))
 					}
 				}
 			},
@@ -251,11 +253,11 @@ importScript([
 			var a = Log.action("get timings", true);
 			try {
 				var details = yield (search({
-					"from": "jobs",
+					"from": "task",
 					"where": {
 						"and": [
 							(d.revision ? {"eq": {"build.revision": d.revision}} : true),
-							{"eq": {"action.start_time": d.start.unix()}},
+							{"eq": {"task.run.start_time": d.start.unix()}},
 							{"eq": {"build.branch": d.branch}},
 							totalsFilter
 						]
@@ -293,15 +295,13 @@ importScript([
 	};//function
 
     $(document).ready(function(){
-        GUI.setup(
-            createChart,
-            [
-                {"id": "showWaitTime", "name": "Include Wait Time", "type":"boolean", "default": false},
-                {"id": "excludeOutliers", "name": "Exclude Outliers", "type":"boolean", "default": true},
+        GUI.setup(createChart, [
+                {"id": "showWaitTime", "name": "Include Wait Time", "type": "boolean", "default": false},
+                {"id": "excludeOutliers", "name": "Exclude Outliers", "type": "boolean", "default": true},
                 {"id": "sampleMin", "name": "Start Date", "type": "time", "default": Date.eod().add("-3week")},
                 {"id": "sampleMax", "name": "End Date", "type": "time", "default": Date.today()},
                 {
-                    "id": "branch", "name": "Branch", "default":"try", "type": PartitionFilter.newInstance({
+                    "id": "branch", "name": "Branch", "default": "try", "type": PartitionFilter.newInstance({
                     "id": "branch",
                     "name": "branch",
                     "dimension": Mozilla.Builds.Branch,
@@ -332,15 +332,6 @@ importScript([
                     "id": "product",
                     "name": "product",
                     "dimension": Mozilla.Builds.Product,
-                    "onlyOne": true,
-                    "expandAll": true
-                })
-                },
-                {
-                    "id": "test", "name": "Test Suite", "default": "mochitest", "type": PartitionFilter.newInstance({
-                    "id": "test",
-                    "name": "test",
-                    "dimension": Mozilla.Builds.Test,
                     "onlyOne": true,
                     "expandAll": true
                 })

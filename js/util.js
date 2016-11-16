@@ -252,32 +252,67 @@ function coalesceAll(obj, accessors){
 	return ZIP(ZIP(temp).map(COALESCE))[0];
 }//function
 
-
-var RESULTSET_BY_REVISION = new Template("https://treeherder.mozilla.org/api/project/{{branch}}/resultset/?format=json&count=1000&full=true&short_revision__in={{revision}}&format=json");
-var JOBS_BY_RESULTSET = new Template("https://treeherder.mozilla.org/api/project/{{branch}}/jobs/?count=2000&offset={{offset}}&result_set_id__in={{result_set_id}}&format=json");
+var RESULT_SET_LIMIT = 500;
+var RESULTSET_BY_REVISION = new Template("https://treeherder.mozilla.org/api/project/{{branch}}/resultset/?count="+RESULT_SET_LIMIT+"&offset={{offset}}&full=true&revision={{revision}}&format=json");
+var JOBS_BY_RESULTSET = new Template("https://treeherder.mozilla.org/api/project/{{branch}}/jobs/?count="+RESULT_SET_LIMIT+"&offset={{offset}}&result_set_id__in={{result_set_id}}&format=json");
 var SELECTED_JOB = new Template("https://treeherder.mozilla.org/#/jobs?repo={{branch}}&revision={{revision}}&selectedJob={{jobId}}&exclusion_profile=false&duplicate_jobs=visible&filter-tier=1&filter-tier=2&filter-tier=3");
-function openTreeherder(branch, revision, starttime, buildername){
+//var DETAILS_BY_JOB_ID = new Template("https://treeherder.mozilla.org/api/jobdetail/?job_id__in={{job_id}}&repository={{branch}}&format=json");
+var JOB_LOG_URL = new Template("https://treeherder.mozilla.org/api/project/{{branch}}/job-log-url/?job_id={{job_id}}&format=json");
+
+function openTreeherder(branch, revision, starttime, buildername, taskId){
 	Thread.run(function*(){
 		var a = Log.action("Find TH job", true);
+
 		// GET ALL JOBS
 		try{
-			var acc = [];
-			var url = RESULTSET_BY_REVISION.expand({"branch": branch, "revision":revision.substring(0, 12), "offset":acc.length});
-			var resultSets = yield Rest.get({"url":url});
-			url = JOBS_BY_RESULTSET.expand({"branch": branch, "result_set_id":resultSets.results[0].id, "offset":acc.length});
-			var data = yield Rest.get({"url":url});
-			acc.extend(data.results);
-			while (data.results.length==2000){
-				url = JOBS_BY_RESULTSET.expand({"branch": branch, "result_set_id":resultSets.results[0].id, "offset":acc.length});
-				data = yield Rest.get({"url":url});
-				acc.extend(data);
+			var listJobs = [];
+			var listRS = [];
+
+			var done=false;
+			var countRS = 0;
+			while (!done){
+				var url = RESULTSET_BY_REVISION.expand({"branch": branch, "revision":revision.substring(0, 12), "offset":countRS});
+				var resultSets = yield Rest.get({"url":url});
+				if (resultSets.results.length<RESULT_SET_LIMIT) done=true;
+				countRS += resultSets.results.length;
+				listRS.extend(resultSets.results.select("id"));
+			}//while
+			listRS = Array.UNION([listRS]);
+
+			var done = false;
+			var countJ = 0;
+			while (!done) {
+				url = JOBS_BY_RESULTSET.expand({"branch": branch, "result_set_id": listRS, "offset": countJ});
+				var data = yield Rest.get({"url": url});
+				if (data.results.length < RESULT_SET_LIMIT) done = true;
+				countJ += data.results.length;
+				listJobs.extend(data.results);
 			}//while
 
-			acc.forall(function(d){
-				if (d.ref_data_name==buildername && Date.newInstance(d.start_timestamp).unix()==starttime){
-					window.open(SELECTED_JOB.expand({"branch":branch, "revision":revision, "jobId": d.id}));
-				}//endif
-			});
+			if (buildername) {
+				listJobs.forall(function(d){
+					if (d.ref_data_name == buildername && Date.newInstance(d.start_timestamp).unix() == starttime) {
+						window.open(SELECTED_JOB.expand({"branch": branch, "revision": revision, "jobId": d.id}));
+					}//endif
+				});
+			}else{
+				var found=false;
+				var groups = listJobs.groupBy({"size":100});
+				for (var g=0;g<groups.length;g++){
+					var values = groups[g].values;
+					if (!found){
+						url = JOB_LOG_URL.expand({"branch": branch, "job_id": values.select("id").join("&job_id=")});
+						data = yield Rest.get({"url":url});
+						data.forall(function(r){
+							var taskIdFound = /[\w-]{22}/.exec(r.url);
+							if (taskIdFound[0]==taskId && !found) {
+								found=true;
+								window.open(SELECTED_JOB.expand({"branch": branch, "revision": revision, "jobId": r.job_id}));
+							}//endif
+						});
+					}//endif
+				};
+			}//endif
 		}catch(e){
 			Log.action("rev "+revision.substring(0, 12)+" could not be found")
 		}finally{

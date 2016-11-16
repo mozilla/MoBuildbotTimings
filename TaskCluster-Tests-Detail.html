@@ -73,7 +73,7 @@ importScript([
 		'<tr>' +
 		'   <td style="text-align: right;"><b>{{status|upper}} :</b></td>' +
 		'   <td style="text-align: left;">&nbsp;<b>{{branch}}</b> rev {{revision|left(12)}}</td>' +
-		'   <td rowspan="3" style="text-align: right"><a class="button" href="#" onClick=\'openTreeherder({{branch|quote}}, {{revision|quote}}, {{start|unix}}, {{task_id|quote}})\'>Go to Treeherder</a></td>'+
+		'   <td rowspan="3" style="text-align: right"><a class="button" href="#" onClick=\'openTreeherder({{branch|quote}}, {{revision|quote}}, {{start|unix}}, undefined, {{task_id|quote}})\'>Go to Treeherder</a></td>'+
 		'</tr>'+
 		'<tr>' +
 		'   <td style="text-align: right;"><b>Start Time :</b></td>' +
@@ -99,6 +99,8 @@ importScript([
 
 	var __createChart = function*(){
 
+        var END_TIME_FIELD = "task.action.end_time";
+
 		var startTime = Date.newInstance(GUI.state.sampleMin);
 		var endTime = Date.newInstance(GUI.state.sampleMax);
         var branchName = coalesce(GUI.state.branch.getSimpleState(), "All Branches");
@@ -111,7 +113,7 @@ importScript([
 		var typeName = GUI.state.type.getSimpleState();
         var typeFilter = {"or": GUI.state.type.getSelectedParts().select("fullFilter")};
         var testName = GUI.state.test.getSimpleState();
-        var testFilter = {"or": GUI.state.test.getSelectedParts().select("where")};
+        var testFilter = {"or": GUI.state.test.getSelectedParts().select("esfilter")};
         var excludeOutliers = GUI.state.excludeOutliers;
 
 		if (!platformName){
@@ -160,9 +162,9 @@ importScript([
 
         var duration;
         if (GUI.state.showWaitTime) {
-            duration = {"div": [{"sub": ["task.run.end_time", "task.run.scheduled"]}, 60], "default": 0}
+            duration = {"div": [{"sub": [END_TIME_FIELD, "task.run.scheduled"]}, 60], "default": 0}
         }else{
-            duration = {"div": [{"sub": ["task.run.end_time", "task.run.start_time"]}, 60], "default": 0}
+            duration = {"div": [{"sub": [END_TIME_FIELD, "task.run.start_time"]}, 60], "default": 0}
         }//endif
 
 		a = Log.action("Loading "+count.data.count+" tests", true);
@@ -172,8 +174,8 @@ importScript([
 				"select":[
                     {"name":"request", "value":"task.run.scheduled"},
                     {"name":"start", "value":"task.run.start_time"},
-                    {"name":"end", "value":"task.run.end_time"},
-//					{"name":"status", "value":"action.buildbot_status"},
+                    {"name":"end", "value":END_TIME_FIELD},
+					{"name":"status", "value":"task.run.status"},
 					{"name":"duration", "value": duration},
 					{"name":"branch", "value":"build.branch"},
 					{"name":"revision", "value":"build.revision"},
@@ -293,9 +295,7 @@ importScript([
 	};//function
 
     $(document).ready(function(){
-        GUI.setup(
-            createChart,
-            [
+		GUI.setup(createChart, [
                 {"id": "showWaitTime", "name": "Include Wait Time", "type":"boolean", "default": false},
                 {"id": "excludeOutliers", "name": "Exclude Outliers", "type":"boolean", "default": true},
                 {"id": "sampleMin", "name": "Start Date", "type": "time", "default": Date.eod().add("-3week")},

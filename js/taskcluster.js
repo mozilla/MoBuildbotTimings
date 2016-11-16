@@ -12,6 +12,7 @@ function* get_tc_times(){
 
 
 	var CHART_MULTIPLE=1.0;
+	var CHART_ADD=30;
 	if (BAR_SPACING.right(1) == "%") {
 		CHART_MULTIPLE = 1 + convert.String2Integer(BAR_SPACING.leftBut(1)) / 100;
 	} else if (BAR_SPACING.right(2) == "px") {
@@ -69,7 +70,7 @@ function* get_tc_times(){
 				{
 					"name": "Platform",
 					"allowNulls": false,
-					"domain": Mozilla.Builds.Platform.getActiveDataDomain()
+					"domain": Mozilla.Builds.TC_Platform.getActiveDataDomain()
 				},
 				{
 					"name": "Type",
@@ -125,7 +126,7 @@ function* get_tc_times(){
 				{
 					"name": "Platform",
 					"allowNulls": false,
-					"domain": Mozilla.Builds.Platform.getActiveDataDomain()
+					"domain": Mozilla.Builds.TC_Platform.getActiveDataDomain()
 				},
 				{
 					"name": "Type",
@@ -165,12 +166,12 @@ function* get_tc_times(){
     var all_actions = timings.all_actions;
 	var build_actions = timings.build_actions;
 
-	$("#tc_chart").height(build_actions.length * BAR_HEIGHT* CHART_MULTIPLE);
+	$("#tc_chart").height(build_actions.length * BAR_HEIGHT* CHART_MULTIPLE+CHART_ADD);
 
 	var chart = gantt({
 		"target": "tc_chart",
 		"data": all_actions,
-		"style": {"height": build_actions.length * BAR_HEIGHT* CHART_MULTIPLE},
+		"style": {"height": build_actions.length * BAR_HEIGHT* CHART_MULTIPLE+CHART_ADD},
 		"axis": {
 			"x": {
 				"label": "Time",

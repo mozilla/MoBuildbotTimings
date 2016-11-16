@@ -30,15 +30,60 @@ Dimension.addEdges(false, Mozilla, [{
 				{"name": "Debug", "ordering": 3, "style": {"color": "#f6b26b"}, "value": "debug", "esfilter": {"term": {"build.type": "debug"}}}
 			]
 		},
+		{"name": "Product", "field": "build.product",
+			"partitions": [
+				{"name": "Firefox", "style": {"color": "#de4815"}, "value": "firefox", "esfilter": {"term": {"build.product": "firefox"}}}
+			]
+		},
+		{
+			"name": "BB_Platform",
+			"field": "build.platform",
+
+			"partitions": [
+				{"name": "Linux32", "style": {"color": "#de4815"}, "value": "linux32", "esfilter": {"term": {"build.platform": "linux32"}}},
+				{"name": "Linux64", "style": {"color": "#de4815"}, "value": "linux64", "esfilter": {"term": {"build.platform": "linux64"}}},
+				{"name": "OSX64", "style": {"color": "#a4c739"}, "value": "macosx64", "esfilter": {"term": {"build.platform": "macosx64"}}},
+				{"name": "WINNT 5.2", "style": {"color": "#de4815"}, "value": "win5", "esfilter": {"prefix": {"build.name": "WINNT 5.2"}}},
+				{"name": "WINNT 6.1 x86-64", "style": {"color": "#de4815"}, "value": "win6", "esfilter": {"prefix": {"build.name": "WINNT 6.1 x86-64"}}},
+				{"name": "Windows XP 32-bit", "style": {"color": "#de4815"}, "value": "winxp", "esfilter": {"prefix": {"build.name": "Windows XP 32-bit"}}},
+				{"name": "Windows 7 32-bit", "style": {"color": "#de4815"}, "value": "win732", "esfilter": {"prefix": {"build.name": "Windows 7 32-bit"}}},
+				{"name": "Windows 7 VM 32-bit", "style": {"color": "#de4815"}, "value": "win732vm", "esfilter": {"prefix": {"build.name": "Windows 7 VM 32-bit"}}},
+				{"name": "Windows 7 VM-GFX 32-bit", "style": {"color": "#de4815"}, "value": "win732gfx", "esfilter": {"prefix": {"build.name": "Windows 7 VM-GFX 32-bit"}}},
+				{"name": "Windows 8 64-bit", "style": {"color": "#de4815"}, "value": "win864", "esfilter": {"prefix": {"build.name": "Windows 8 64-bit"}}},
+				{"name": "Windows 10 64-bit", "style": {"color": "#de4815"}, "value": "win1064", "esfilter": {"prefix": {"build.name": "Windows 10 64-bit"}}}
+			],
+			"esfilter": {"not": {"contains": {"run.key": "br-haz"}}}
+		},
 		{
 			"name": "Platform",
+			"field": "build.platform",
+
+			"partitions": [
+				{"name": "Linux32", "style": {"color": "#de4815"}, "value": "linux32", "esfilter": {"term": {"build.platform": "linux32"}}},
+				{"name": "Linux64", "style": {"color": "#de4815"}, "value": "linux64", "esfilter": {"term": {"build.platform": "linux64"}}},
+				{"name": "OSX64", "style": {"color": "#a4c739"}, "value": "macosx64", "esfilter": {"term": {"build.platform": "macosx64"}}},
+				{"name": "win32", "style": {"color": "#de4815"}, "value": "win32", "esfilter": {"term": {"build.platform": "win32"}}},
+				{"name": "win64", "style": {"color": "#de4815"}, "value": "win64", "esfilter": {"term": {"build.platform": "win64"}}}
+			],
+			"esfilter": {"not": {"contains": {"run.key": "br-haz"}}}
+		},
+		{
+			"name": "TC_Platform",
 			"field": "build.platform",
 			"partitions": [
 				{"name": "Linux32", "style": {"color": "#de4815"}, "value": "linux32", "esfilter": {"term": {"build.platform": "linux32"}}},
 				{"name": "Linux64", "style": {"color": "#de4815"}, "value": "linux64", "esfilter": {"term": {"build.platform": "linux64"}}},
 				{"name": "OSX64", "style": {"color": "#a4c739"}, "value": "macosx64", "esfilter": {"term": {"build.platform": "macosx64"}}},
 				{"name": "Windows32", "style": {"color": "#136bab"}, "value": "win32", "esfilter": {"term": {"build.platform": "win32"}}},
-				{"name": "Windows64", "style": {"color": "#136bab"}, "value": "win64", "esfilter": {"term": {"build.platform": "win64"}}}
+				{"name": "Windows64", "style": {"color": "#136bab"}, "value": "win64", "esfilter": {"term": {"build.platform": "win64"}}},
+				{"name": "windowsxp", "style": {"color": "#136bab"}, "value": "winxp", "esfilter": {"term": {"build.platform": "windowsxp"}}},
+				{"name": "windows7-32", "style": {"color": "#136bab"}, "value": "win732", "esfilter": {"term": {"build.platform": "windows7-32"}}},
+				{"name": "windows7-32-vm", "style": {"color": "#136bab"}, "value": "win732vn", "esfilter": {"term": {"build.platform": "windows7-32-vm"}}},
+				{"name": "windows8-64", "style": {"color": "#136bab"}, "value": "win864", "esfilter": {"term": {"build.platform":"windows8-64" }}},
+				{"name": "windows10-64", "style": {"color": "#136bab"}, "value": "win1064", "esfilter": {"term": {"build.platform": "windows10-64"}}},
+				{"name": "windows10-64-vm", "style": {"color": "#136bab"}, "value": "win1064vm", "esfilter": {"term": {"build.platform": "windows10-64-vm"}}},
+				{"name": "windows2012-32", "style": {"color": "#136bab"}, "value": "win1232", "esfilter": {"in": {"build.platform": ["windows-2012-32", "windows2012-32"]}}},
+				{"name": "windows2012-64", "style": {"color": "#136bab"}, "value": "win2164", "esfilter": {"term": {"build.platform":"windows2012-64" }}}
 			],
 			"esfilter": {"not": {"contains": {"run.key": "br-haz"}}}
 		},

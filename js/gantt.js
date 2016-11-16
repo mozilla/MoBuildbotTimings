@@ -177,9 +177,9 @@ function gantt(params){
 				.scale(params.axis.x.domain._scale)
 				.ticks(5)
 				.tickFormat(function(value){
-					return Duration.newInstance(value*1000).toString("hour")
+					return Duration.newInstance(value*1000).format(step.format)
 				})
-				.tickValues(Array.range(1, 10*2).map(function(v){return v*step.milli/1000;}))
+				.tickValues(Array.range(1, 10*2).map(function(v){return v*step.size.milli/1000;}))
 				.tickSize(-chartHeight(1))
 		);
 	};

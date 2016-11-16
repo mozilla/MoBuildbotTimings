@@ -304,7 +304,7 @@ function* get_tc_times(){
 			"branch": "Try"
 		};
 		var params = convert.Map2URLParam(param);
-		var url = "Taskcluster-Tests-Detail.html#" + params;
+		var url = "TaskCluster-Tests-Detail.html#" + params;
 		window.open(url);
 	}
 
@@ -330,7 +330,7 @@ function* get_tc_times(){
 			"branch": "Try"
 		};
 		var params = convert.Map2URLParam(param);
-		var url = "Taskcluster-Builds-Detail.html#" + params;
+		var url = "TaskCluster-Builds-Detail.html#" + params;
 		window.open(url);
 	}
 

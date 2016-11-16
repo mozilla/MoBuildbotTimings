@@ -294,14 +294,43 @@ Duration.niceSteps = function(min, max, desiredSteps, desiredInterval){
 	for (var m = 0; i < monthSteps.length; m++) {
 		if (interval.month >= monthSteps[i]) monthInterval = m;
 	}//for
-	var output = new Duration();
+	var stepSize = new Duration();
 	if (monthInterval >= 0) {
-		output.month = monthSteps[monthInterval];
-		output.milli = output.month * Duration.MILLI_VALUES.month;
+		stepSize.month = monthSteps[monthInterval];
+		stepSize.milli = stepSize.month * Duration.MILLI_VALUES.month;
 	} else {
-		output.milli = milliSteps[milliInterval];
+		stepSize.milli = milliSteps[milliInterval];
 	}//endif
-	return output;
+
+	var minFormat=0; //SECONDS
+	if (stepSize.milli>=Duration.MILLI_VALUES.minute) minFormat=1;
+	if (stepSize.milli>=Duration.MILLI_VALUES.hour) minFormat=2;
+	if (stepSize.milli>=Duration.MILLI_VALUES.day) minFormat=3;
+	if (stepSize.milli>=Duration.MILLI_VALUES.month) minFormat=4;
+	if (stepSize.month>=Duration.MONTH_VALUES.month) minFormat=4;
+	if (stepSize.month>=Duration.MONTH_VALUES.year) minFormat=5;
+
+	var maxFormat=5; //YEAR
+	var span=endDuration.subtract(startDuration, stepSize);
+	if (span.month<Duration.MONTH_VALUES.year && span.milli<Duration.MILLI_VALUES.day*365) maxFormat=4; //month
+	if (span.month<Duration.MONTH_VALUES.month && span.milli<Duration.MILLI_VALUES.day*31) maxFormat=3; //day
+	if (span.milli<Duration.MILLI_VALUES.day) maxFormat=2;
+	if (span.milli<Duration.MILLI_VALUES.hour) maxFormat=1;
+	if (span.milli<Duration.MILLI_VALUES.minute) maxFormat=0;
+
+	if (maxFormat<=minFormat) maxFormat=minFormat;
+
+	//INDEX BY [minFormat][maxFormat]
+	var format = [
+	["ss.000", "mm:ss", "HH:mm:ss", "days, HH:mm:ss", "days, HH:mm:ss", "days, HH:mm:ss"],
+	[      "", "HH:mm", "HH:mm"   , "days, HH:mm"   , "days, HH:mm"   , "days, HH:mm"   ],
+	[      "",      "", "hours"   , "days, HH"      , "days, HH:mm"   , "days, HH:mm"   ],
+	[      "",      "",         "", "days"          , "days"          , "days"          ],
+	[      "",      "",         "", ""              , "days"          , "days"          ],
+	[      "",      "",         "", ""              , ""              , "days"          ]
+	][minFormat][maxFormat];
+
+	return {"size": stepSize, "format":format};
 };//function
 
 

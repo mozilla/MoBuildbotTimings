@@ -88,8 +88,19 @@ importScript("../collections/aArray.js");
 
 	});
 
-
+	/**
+	 * EVERYTHING GIVEN TO A Deferral GETS PACKED INTO A FUNCTION
+	 * WHICH CAN BE EXECUTED LATER, AND MULTIPLE TIMES
+	 *
+	 * INSERINTG `.defer()` INTO A D3 CHAIN WILL PACKAGE ALL FUNCTIONS AFTER
+	 * IT, HAVING THE WHOLE EXPRESSION RETURN A FUNCTION FOR LATER EXECUTION
+	 *
+	 * @param selection
+	 * @returns {func}
+	 * @constructor
+   */
 	var Deferral = function(selection){
+
 		var func = function(){
 			var sel = func.selection;
 			func.accumulator.forall(function(action){

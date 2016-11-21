@@ -29,12 +29,6 @@ function* get_tc_times(){
 					{"eq": {"build.product": "firefox"}}
 				]
 			},
-			{
-				"or": [
-					{"missing": "build.type"},
-					{"in": {"build.type": ["pgo", "debug"]}}
-				]
-			},
 			{"in": {"build.branch": ["try"]}}
 		]
 	};
@@ -161,7 +155,10 @@ function* get_tc_times(){
 	yield Thread.join(build_thread);
 	yield Thread.join(tests_thread);
 
+
 	var timings = post_processing(build_averages,test_averages);
+
+	Log.note(convert.value2json(timings));
 
     var all_actions = timings.all_actions;
 	var build_actions = timings.build_actions;

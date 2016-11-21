@@ -13,7 +13,7 @@ Dimension.addEdges(false, Mozilla, [{
 		{
 			"name": "Branch",
 			"field": "build.branch",
-			"partitions": [
+				"partitions": [
 				{"name": "Try", "value": "try", "ordering": 0, "esfilter": {"term": {"build.branch": "try"}}},
 				{"name": "Inbound", "value": "mozilla-inbound", "ordering": 0, "esfilter": {"term": {"build.branch": "mozilla-inbound"}}},
 				{"name": "Central", "value": "mozilla-central", "ordering": 0, "esfilter": {"term": {"build.branch": "mozilla-central"}}},
@@ -25,8 +25,8 @@ Dimension.addEdges(false, Mozilla, [{
 			"field": "build.type",
 			"partitions": [
 				{"name": "Standard", "ordering": 0, "esfilter": {"missing": "build.type"}},
-				{"name": "PGO", "ordering": 1, "style": {"color": "#f9cb9c"}, "value": "pgo", "esfilter": {"term": {"build.type": "pgo"}}},
 				{"name": "OPT", "ordering": 2, "style": {"color": "#f9cb9c"}, "value": "opt", "esfilter": {"term": {"build.type": "opt"}}},
+				{"name": "PGO", "ordering": 1, "style": {"color": "#f9cb9c"}, "value": "pgo", "esfilter": {"term": {"build.type": "pgo"}}},
 				{"name": "Debug", "ordering": 3, "style": {"color": "#f6b26b"}, "value": "debug", "esfilter": {"term": {"build.type": "debug"}}}
 			]
 		},
@@ -73,7 +73,8 @@ Dimension.addEdges(false, Mozilla, [{
 			"partitions": [
 				{"name": "Linux32", "style": {"color": "#de4815"}, "value": "linux32", "esfilter": {"term": {"build.platform": "linux32"}}},
 				{"name": "Linux64", "style": {"color": "#de4815"}, "value": "linux64", "esfilter": {"term": {"build.platform": "linux64"}}},
-				{"name": "OSX64", "style": {"color": "#a4c739"}, "value": "macosx64", "esfilter": {"term": {"build.platform": "macosx64"}}},
+				{"name": "OSX 10.10", "style": {"color": "#a4c739"}, "value": "macos1010", "esfilter": {"term": {"build.platform": "osx-10-10"}}},
+				{"name": "OSX 10.7", "style": {"color": "#a4c739"}, "value": "macos107", "esfilter": {"term": {"build.platform": "osx-10-7"}}},
 				{"name": "Windows32", "style": {"color": "#136bab"}, "value": "win32", "esfilter": {"term": {"build.platform": "win32"}}},
 				{"name": "Windows64", "style": {"color": "#136bab"}, "value": "win64", "esfilter": {"term": {"build.platform": "win64"}}},
 				{"name": "windowsxp", "style": {"color": "#136bab"}, "value": "winxp", "esfilter": {"term": {"build.platform": "windowsxp"}}},

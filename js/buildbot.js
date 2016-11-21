@@ -333,6 +333,9 @@ function* get_bb_times(){
 
 
 function post_processing(build_averages,test_averages){
+	var HIDE_POPULATIONS_LESS_THAN=100;
+
+
 //SHOW THE (MAX) END-TO-END TIMES BY PLATFORM
 	var build_counts = new Matrix({"data": build_averages.data.count});
 	var build_wait_times = new Matrix({"data": build_averages.data.wait_time});
@@ -365,9 +368,15 @@ function post_processing(build_averages,test_averages){
 			"tests": []
 		};
 
-		build_details.tests = test_averages.edges[2].domain.partitions
+		build_details.tests = test_averages
+			.edges[2]
+			.domain
+			.partitions
 			.mapExists(function(part, i){
 				var tc = [c[0], c[1], i];
+
+				var count = test_counts.get(tc);
+				if (count<HIDE_POPULATIONS_LESS_THAN) return;
 
 				var test_duration = test_durations.get(tc);
 				if (test_duration == null) return;

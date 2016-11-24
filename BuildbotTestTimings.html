@@ -1,0 +1,456 @@
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<HTML>
+<HEAD>
+	<script type="text/javascript" src="modevlib/imports/import.js"></script>
+</HEAD>
+<BODY style="height:auto;">
+
+<div id="sidebar" style="width:300px;" layout="tl=page.tl">
+	<br>
+	<br>
+	<div style="height: 30px; text-align: center;vertical-align:middle;">
+		<span id="status" style="height:30px">Page Loading...</span><span class="loading"><img src="images/spinner.gif" alt=""></span>
+	</div>
+
+	<hr>
+	<div id="description">
+		View average <b>test</b> timings for each step in BuildBot, or MozHarness.  Filter by pool, platfrom or suite.<br><br>
+		Only steps executed over 10% of the time are shown here.  It is important you select a suite to get a reasonable estimate of the steps involved.  Looking at steps across multiple suites may neglect showing steps unique to particular suites.<br><br>
+		ETL for the builds is not complete, so data will appear to be missing.  Would you like to see it?  Email me <a href="klahnakoski@mozilla.com">klahnakoski@mozilla.com</a>!
+	</div>
+	<hr>
+	<div id="testMessage"></div>
+	<hr>
+	<div id="stats"></div>
+	<hr>
+	<div id="parameters" class="parameters">
+	</div>
+	<div id="filters" class="menu"></div>
+</div>
+
+<div id="content" layout="right=page.right;top=page.top;left=sidebar.right;bottom=page.bottom" style="padding-left:20px;">
+	<h3 id="title" style="height:40px;">Buildbot Test Timings (1 week average)</h3>
+
+	<table class="grid">
+		<tr>
+			<td  style="width:410px;">
+				<div id="details" style="overflow-y: scroll;overflow-x: visible;"></div>
+			</td>
+			<td style="width:410px;">
+				<div id="count" class="chart" style="display: block;text-align:center;height:250px;width:400px;"></div>
+				<div id="average" class="chart" style="display: block;text-align:center;height:250px;width:400px;"></div>
+				<div id="percent" class="chart" style="display: block;text-align:center;height:250px;width:400px;"></div>
+			</td>
+
+		</tr>
+
+	</table>
+</div>
+
+<div layout="bc=page.bc">
+	Source at <a href="https://github.com/mozilla/MoBuildbotTimings">https://github.com/mozilla/MoBuildbotTimings</a>
+</div>
+
+
+<script type="application/javascript">
+
+
+importScript([
+	'modevlib/gui/GUI.js',
+	'modevlib/layouts/layout.js',
+	'js/util.js',
+	'modevlib/Dimension-Jobs.js'
+], function(){
+	layoutAll();
+
+	var TABLE = "jobs.action.timings";
+	var current_run = null;
+	var timeFilter = {"gt": {"action.start_time": Date.now().subtract(Duration.WEEK).unix()}};
+
+	var __main = function*(this_run){
+
+		current_run = this_run;
+		$("#details").html("");
+		$("#count").html("");
+		$("#average").html("");
+		$("#percent").html("");
+
+		var pool = GUI.state.pool.makeFilter();
+		var platform = GUI.state.platform.makeFilter();
+		var product = GUI.state.product.makeFilter();
+		var suite = GUI.state.suite.makeFilter();
+
+		var focusFilter = {"and": [
+			pool,
+			platform,
+			product,
+			suite
+//			{"eq":{"action.type":"test"}}
+		]};
+
+
+		var all_steps = null;
+
+		var a = Log.action("find steps", true);
+		try {
+			var result = yield (search({
+				"select": [
+					{"value": "order", "aggregate": "average"},
+					{"aggregate": "count"}
+				],
+				"edges": [
+					{
+						"name": "step",
+						"value": ["builder.step", "harness.step"]
+					}
+				],
+				"from": TABLE,
+				"where": {"and":[
+					focusFilter,
+					timeFilter
+				]},
+				"limit": 1000,
+				"format": "list"
+			}));
+			all_steps = result.data;
+		} catch (e) {
+			Log.error("Find steps", e);
+		} finally {
+			Log.actionDone(a);
+		}//try
+
+		if (all_steps.length==0){
+			if (current_run==this_run){
+				$("#details").html("No data");
+				yield (null);
+			}//endif
+		}//endif
+
+		var populous = qb.sort(all_steps, {"value": "count", "sort": -1});
+
+		//FIND STEP POSITION OF run-tests
+		var population = populous.map(function(v, i){
+			if (v.step[1]=="run-tests"){
+				return v.count;
+			}//endif
+		});
+		if (population.length==0){
+			$("#details").html("no tests");
+			yield (null);
+		}//endif
+		population = population[0];
+
+		// KEEP THE MOST POPULAR STEPS
+		var stop = 0;
+		populous.forall(function(v, i){
+			if (stop == 0 && i > 0 && v.count * 10 < population){
+				stop = i;
+			}//endif
+		});
+		populous=populous.slice(0, stop);
+
+		var steps = qb.sort(populous, "order");
+
+		Thread.run(function*(){
+			//PULL THE AVERAGE TIME FOR EACH STEP
+			var step_timings=null;
+
+			var a = Log.action("find durations", true);
+			try {
+				var result = yield (search({
+					"select": [
+						{"value": "order", "aggregate": "average"},
+						{"name":"b_duration", "value": "builder.duration", "aggregate": "average"},
+						{"name":"h_duration", "value": "harness.duration", "aggregate": "average"},
+						{"aggregate":"count"}
+					],
+					"groupby": ["builder.step", "harness.step"],
+					"from": TABLE,
+					"where": {"and": [
+						focusFilter,
+						timeFilter,
+						{"or": steps.select("step").map(function(v){
+							if (v[1]){
+								return {"eq": {"builder.step": v[0], "harness.step": v[1]}};
+							}else{
+								return {"and":[
+									{"eq": {"builder.step": v[0]}},
+									{"missing":"harness.step"}
+								]};
+							}//endif
+						})}
+					]},
+					"limit": 1000,
+					"format": "list"
+				}));
+				step_timings = result;
+			} catch (e) {
+				if (e.contains("Interrupted")){
+					return
+				}//endif
+				Log.error("Find steps", e);
+			} finally {
+				Log.actionDone(a);
+			}//try
+
+			step_timings.data = qb.sort(step_timings.data, "order");
+
+			//FIND NUMBER OF run-tests
+			var num_tests = step_timings.data.map(function(v){
+				if (v.harness && v.harness.step=="run-tests") return v.count;
+			})[0];
+
+
+			step_timings.data.forall(function(v, i){
+				//DO NOT SHOW BUILDER STEP THAT HAS HARNESS SUB-STEPS (TO MINIMIZE CONFUSION)
+				next = step_timings.data[i+1];
+				if (next && next.harness && !v.harness){
+					v.b_duration=null;
+				}//endif
+
+				//FORMAT STEP
+				v.step = v.builder.step;
+				if (v.harness) {
+					v.step = v.step + "::" + v.harness.step;
+				}//endif
+
+				//COALESCE DURATION
+				v.duration = coalesce(v.h_duration, v.b_duration);
+
+				//NORMALIZE DURATION BASED ON COUNT
+				v.duration = aMath.round(v.duration * v.count/num_tests, 0)
+			});
+
+			//ONLY SHOW step AND duration
+			step_timings.header = [
+				{"name": "step"},
+				{"name": "duration (s)"}
+			];
+
+			if (current_run==this_run) {
+				$("#details").html(convert.List2HTMLTable(step_timings));
+			}//endif
+
+			yield (null);
+		});
+
+
+		var history_query = {
+			"select": [
+				{
+					"name": "run_tests",
+					"value": {"when": {"eq": {"harness.step": "run-tests"}}, "then": "harness.duration"},
+					"aggregate": "average",
+					"default": 0
+				},
+				{
+					"name": "other",
+					"value": {"when": {"not": {"eq": {"harness.step": "run-tests"}}}, "then": {"add": ["builder.duration", "harness.duration"]}},
+					"aggregate": "average",
+					"default": 0
+				}
+			],
+			"edges": [
+				{"name": "date", "value": "action.start_time", "allowNulls": false, "domain": {
+					"type": "time",
+					"min": GUI.state.sampleMin,
+					"max": GUI.state.sampleMax,
+					"interval": GUI.state.sampleInterval
+				}}
+			],
+			"from": TABLE,
+			"where": {"and": [
+				focusFilter,
+				{"gte": {"action.start_time": Date.newInstance(GUI.state.sampleMin).unix()}},
+				{"lt": {"action.start_time": Date.newInstance(GUI.state.sampleMax).unix()}},
+				{"or": steps.select("step").map(function(v){
+					if (v[1]) {
+						return {"eq": {"builder.step": v[0], "harness.step": v[1]}};
+					} else {
+						return {"and": [
+							{"eq": {"builder.step": v[0]}},
+							{"missing": "harness.step"}
+						]};
+					}//endif
+				})}
+			]},
+			"limit": 1000,
+			"format": "cube"
+		};
+
+
+
+		Thread.run(function*(){
+			//SHOW TIMES OVER PAST FEW WEEKS
+			var a = Log.action("pull history", true);
+			try {
+				var result = yield (search(history_query));
+				step_timings = result;
+			} catch (e) {
+				Log.error("Pull steps failed", e);
+			} finally {
+				Log.actionDone(a);
+			}//try
+
+
+			//REPLACE NULLS WITH ZERO (SHOULD BE DONE BY ACTIVE DATA)
+			Map.forall(result.data, function(k,v){
+				v = new Matrix({"data":v});
+				v.forall(function(vv, c){
+					if (vv==null){
+						v.set(c, 0);
+					}//endif
+				})
+			});
+
+			var pct_result = {};
+			pct_result.select = result.select.map(function(s){if (s.name!="count") return s;});
+			pct_result.edges = result.edges;
+			pct_result.data = {};
+			pct_result.data.other = result.data.run_tests.map(function(v, i){
+				if (result.data.run_tests[i] + result.data.other[i]>0) {
+					return result.data.other[i] / (result.data.run_tests[i] + result.data.other[i])
+				}else{
+					return 1;
+				}//endif
+			});
+			pct_result.data.run_tests = result.data.run_tests.map(function(v, i){
+				if (result.data.run_tests[i] + result.data.other[i]>0) {
+					return result.data.run_tests[i] / (result.data.run_tests[i] + result.data.other[i])
+				}else{
+					return 0;
+				}//endif
+			});
+
+			if (current_run==this_run){
+				aChart.show({
+					"id":"average",
+					"name": "Average Step Time",
+					"sheetDiv":"info",
+					"type":"line",
+					"stacked":true,
+					"cube":result,
+					xAxisSize: 50
+				});
+				aChart.show({
+					"id":"percent",
+					"name": "Percentage Step Time",
+					"sheetDiv":"info",
+					"type":"area",
+					"stacked":true,
+					"cube":pct_result,
+					xAxisSize: 50
+				});
+			}//endif
+
+		});
+
+
+		Thread.run(function*(){
+			history_query.select = [{"aggregate": "count"}];
+			history_query.where.and.append({"eq": {"harness.step": "run-tests"}});
+			var a = Log.action("pull count history", true);
+			try {
+				var result = yield (search(history_query));
+			} catch (e) {
+				Log.error("Pull counts failed", e);
+			} finally {
+				Log.actionDone(a);
+			}//try
+
+			aChart.replaceNulls(result);
+
+			if (current_run==this_run) {
+				aChart.show({
+					"id": "count",
+					"name": "Number of `run-tests`",
+					"sheetDiv": "info",
+					"type": "line",
+					"stacked": false,
+					"cube": result,
+					xAxisSize: 50
+				});
+			}//endif
+		});
+		yield (null);
+	};
+
+
+	Thread.showWorking = function(numThread){
+		var l = $(".loading");
+		l.show();
+	};//function
+
+	Thread.hideWorking = function(){
+		var l = $(".loading");
+		l.hide();
+	};//function
+
+
+	var thread;
+	var main = function(){
+		if (thread !== undefined)
+			thread.kill();
+		thread = Thread.run(__main());
+	};
+
+	$(document).ready(function(){
+		GUI.setup(main, [
+			{"id":"sampleMin", "name":"Start Date", "type":"time", "default":Date.eod().add("-3week")},
+			{"id":"sampleMax", "name":"End Date", "type":"time", "default":Date.today()},
+			{"id":"sampleInterval", "name":"Interval", "type":"duration", "default":"day"},
+			{"id": "pool", "name": "Pool", "type": PartitionFilter.newInstance({
+				"id": "pool",
+				"name": "pool",
+				"dimension": Mozilla.Timings.Pool,
+				"onlyOne": true,
+				"expandAll": true
+			})},
+			{"id": "platform", "name": "Platform", "type": PartitionFilter.newInstance({
+				"id": "platform",
+				"name": "platform",
+				"dimension": Mozilla.Timings.Platform,
+				"onlyOne": true,
+				"expandAll": true
+			})},
+			{"id": "product", "name": "Product", "default":"firefox", "type": PartitionFilter.newInstance({
+				"id": "product",
+				"name": "product",
+				"dimension": Mozilla.Timings.Product,
+				"onlyOne": true,
+				"expandAll": true
+			})},
+			{"id": "suite", "name": "Suite", "type": PartitionFilter.newInstance({
+				"id": "suite",
+				"name": "suite",
+				"dimension": Mozilla.Timings.Suite,
+				"onlyOne": true,
+				"expandAll": true
+			})}
+		],
+		[
+//			"if (Date.newInstance(sampleMax).subtract(Date.newInstance(sampleMin)).round(Duration.WEEK, 0)>=5) sampleInterval='week'",
+//			"if (Date.newInstance(sampleMax).subtract(Date.newInstance(sampleMin)).round(Duration.WEEK, 0)<=3) sampleInterval='day'",
+			"sampleMin=Date.newInstance(sampleMin).floor(Duration.newInstance(sampleInterval)).format('yyyy-MM-dd')",
+			"sampleMax=Date.newInstance(sampleMax).addDay(1).floor(Duration.newInstance(sampleInterval)).addDay(-1).format('yyyy-MM-dd')"
+		],
+		"timings",
+		false		//SHOW DEFAULT FILTERS?
+		);
+	});
+
+
+});
+
+
+
+
+</script>
+
+
+</BODY>
+</HTML>
+

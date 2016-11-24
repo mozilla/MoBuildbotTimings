@@ -1,3 +1,7 @@
+
+importScript("../../lib/jquery.js");
+
+
 var layoutAll;        //INITIAL LAYOUT
 var dynamicLayout;    //SUBSEQUENT LAYOUT WHEN DOM CHANGES
 var onDynamicLayout;  //CALL THIS WITH A FUNCTION THAT WILL BE CALLED AFTER EACH LAYOUT

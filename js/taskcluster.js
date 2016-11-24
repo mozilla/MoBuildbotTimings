@@ -8,7 +8,7 @@ importScript("buildbot.js");
 function* get_tc_times(){
 	var BAR_HEIGHT = 30;
 	var BAR_SPACING = "20%";
-	var END_TIME_FIELD = "task.action.end_time";
+	var END_TIME_FIELD = {"coalesce": ["action.end_time", "task.run.end_time"]};
 
 
 	var CHART_MULTIPLE=1.0;

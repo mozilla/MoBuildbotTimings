@@ -333,7 +333,7 @@ function* get_bb_times(){
 
 
 function post_processing(build_averages,test_averages){
-	var HIDE_POPULATIONS_LESS_THAN=100;
+	var HIDE_POPULATIONS_LESS_THAN=30;
 
 
 //SHOW THE (MAX) END-TO-END TIMES BY PLATFORM

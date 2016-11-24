@@ -372,7 +372,7 @@ Duration.niceFormat=function(min, max, desiredSteps, desiredInterval){
 	return [
 	["ss.000", "mm:ss", "HH:mm:ss", "days, HH:mm:ss", "days, HH:mm:ss", "days, HH:mm:ss"],
 	[      "", "HH:mm", "HH:mm"   , "days, HH:mm"   , "days, HH:mm"   , "days, HH:mm"   ],
-	[      "",      "", "hours"   , "days, HH"      , "days, HH:mm"   , "days, HH:mm"   ],
+	[      "",      "", "hours"   , "days, hours"   , "days, HH:mm"   , "days, HH:mm"   ],
 	[      "",      "",         "", "days"          , "days"          , "days"          ],
 	[      "",      "",         "", ""              , "days"          , "days"          ],
 	[      "",      "",         "", ""              , ""              , "days"          ]

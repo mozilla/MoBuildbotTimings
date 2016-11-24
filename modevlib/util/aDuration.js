@@ -324,7 +324,7 @@ Duration.niceSteps = function(min, max, desiredSteps, desiredInterval){
 	var format = [
 	["ss.000", "mm:ss", "HH:mm:ss", "days, HH:mm:ss", "days, HH:mm:ss", "days, HH:mm:ss"],
 	[      "", "HH:mm", "HH:mm"   , "days, HH:mm"   , "days, HH:mm"   , "days, HH:mm"   ],
-	[      "",      "", "hours"   , "days, HH"      , "days, HH:mm"   , "days, HH:mm"   ],
+	[      "",      "", "hours"   , "hours"         , "days, HH:mm"   , "days, HH:mm"   ],
 	[      "",      "",         "", "days"          , "days"          , "days"          ],
 	[      "",      "",         "", ""              , "days"          , "days"          ],
 	[      "",      "",         "", ""              , ""              , "days"          ]

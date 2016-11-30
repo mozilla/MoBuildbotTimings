@@ -210,18 +210,24 @@ importScript("tools.js");
 		}//endif
 
 
+		var xa = qb.get(x_accessor);
+		var ya = qb.get(y_accessor);
 		data.forall(function(d){
-			if (d.duration==null || d.start==null){
-				Log.error("");
-			}//endif
-			data.forall(function(e){
-				if (e!==d && e.duration==d.duration && e.start== d.start){
-					Log.error("same")
+			data.forall(function(e, i){
+				if (e!==d && ya(d)==ya(e)){
+					if (xa(d) instanceof Date){
+						if (convert.Date2milli(xa(d))==convert.Date2milli(xa(e))){
+							data[i]=undefined;
+						}//endif
+					}else{
+						if (xa(d)==xa(e)) {
+							data[i]=undefined;
+						}//endif
+					}//endif
 				}
-
 			});
-
 		});
+		data = data.mapExists(function(d){return d;});
 
 
 		var chartParams = {

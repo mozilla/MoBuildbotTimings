@@ -75,6 +75,8 @@ function showTimeline(action, timings){
 	var HEIGHT = 30;
 	var LINE_PADDING = 10;
 
+	if (action.start_time==null) return;
+
 	var xScale = d3.scaleLinear().domain([action.start_time, action.end_time]).range([20, width - 50]);
 
 	function start(d){

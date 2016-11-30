@@ -32,7 +32,15 @@ Dimension.addEdges(false, Mozilla, [{
 		},
 		{"name": "Product", "field": "build.product",
 			"partitions": [
-				{"name": "Firefox", "style": {"color": "#de4815"}, "value": "firefox", "esfilter": {"term": {"build.product": "firefox"}}}
+				{
+					"name": "Firefox",
+					"style": {"color": "#de4815"},
+					"value": "firefox",
+					"esfilter": {"or":[
+						{"term": {"build.product": "firefox"}},
+						{"missing": "build.product"}
+					]}
+				}
 			]
 		},
 		{
@@ -73,7 +81,7 @@ Dimension.addEdges(false, Mozilla, [{
 			"partitions": [
 				{"name": "Linux32", "style": {"color": "#de4815"}, "value": "linux32", "esfilter": {"term": {"build.platform": "linux32"}}},
 				{"name": "Linux64", "style": {"color": "#de4815"}, "value": "linux64", "esfilter": {"term": {"build.platform": "linux64"}}},
-				{"name": "OSX 10.10", "style": {"color": "#a4c739"}, "value": "macos1010", "esfilter": {"term": {"build.platform": "osx-10-10"}}},
+				//{"name": "OSX 10.10", "style": {"color": "#a4c739"}, "value": "macos1010", "esfilter": {"term": {"build.platform": "osx-10-10"}}},
 				{"name": "OSX 10.7", "style": {"color": "#a4c739"}, "value": "macos107", "esfilter": {"term": {"build.platform": "osx-10-7"}}},
 				{"name": "Windows32", "style": {"color": "#136bab"}, "value": "win32", "esfilter": {"term": {"build.platform": "win32"}}},
 				{"name": "Windows64", "style": {"color": "#136bab"}, "value": "win64", "esfilter": {"term": {"build.platform": "win64"}}},

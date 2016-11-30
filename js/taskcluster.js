@@ -8,7 +8,7 @@ importScript("buildbot.js");
 function* get_tc_times(){
 	var BAR_HEIGHT = 30;
 	var BAR_SPACING = "20%";
-	var END_TIME_FIELD = {"coalesce": ["action.end_time", "task.run.end_time"]};
+	var END_TIME_FIELD = {"coalesce": ["action.end_time", "task.run.end_time", "task.expires"]};
 
 
 	var CHART_MULTIPLE=1.0;
@@ -29,6 +29,7 @@ function* get_tc_times(){
 					{"eq": {"build.product": "firefox"}}
 				]
 			},
+			{"not": {"in": {"task.run.status": ["canceled", "deadline-exceeded"]}}},
 			{"in": {"build.branch": ["try"]}}
 		]
 	};
@@ -102,7 +103,7 @@ function* get_tc_times(){
 
 				{
 					"name": "wait_time",
-					"value": {"sub": ["task.run.start_time", "task.run.scheduled"]},
+					"value": {"sub": [{"coalesce":["task.run.start_time", "task.expires"]}, "task.run.scheduled"]},
 					"aggregate": "percentile", "percentile": 0.50
 				},
 				{
@@ -137,7 +138,7 @@ function* get_tc_times(){
 				"and": [
 					{"exists": "run.suite.name"},
 					mainFilter,
-					{"gt": {"task.run.scheduled": beginPastWeek.unix()}}
+					{"gte": {"task.run.scheduled": beginPastWeek.unix()}}
 				]
 			},
 			"limit": 10000

@@ -98,7 +98,8 @@ importScript([
 
 	var __createChart = function*(){
 
-        var END_TIME_FIELD = "task.action.end_time";
+        var START_TIME_FIELD = {"coalesce": ["action.start_time", "task.run.start_time", "task.run.end_time", "task.expires"]};
+        var END_TIME_FIELD = {"coalesce": ["action.end_time", "task.run.end_time", "task.expires"]};
 
 		var startTime = Date.newInstance(GUI.state.sampleMin);
 		var endTime = Date.newInstance(GUI.state.sampleMax);
@@ -141,8 +142,8 @@ importScript([
 			"where": {
 				"and": [
 					totalsFilter,
-					{"gte": {"task.run.start_time": startTime.unix()}},
-					{"lt": {"task.run.start_time": endTime.unix()}}
+					{"gte": {"task.run.scheduled": startTime.unix()}},
+					{"lt": {"task.run.scheduled": endTime.unix()}}
 				]
 			},
 			"limit": 1000
@@ -160,7 +161,7 @@ importScript([
         if (GUI.state.showWaitTime) {
             duration = {"div": [{"sub": [END_TIME_FIELD, "task.run.scheduled"]}, 60], "default": 0}
         }else{
-            duration = {"div": [{"sub": [END_TIME_FIELD, "task.run.start_time"]}, 60], "default": 0}
+            duration = {"div": [{"sub": [END_TIME_FIELD, START_TIME_FIELD]}, 60], "default": 0}
         }//endif
 
 		a = Log.action("Loading "+count.data.count+" builds", true);
@@ -169,7 +170,7 @@ importScript([
 				"from":"task",
 				"select":[
                     {"name":"request", "value":"task.run.scheduled"},
-					{"name":"start", "value":"task.run.start_time"},
+					{"name":"start", "value":START_TIME_FIELD},
                     {"name":"end", "value":END_TIME_FIELD},
 					{"name":"status", "value":"task.run.status"},
 					{"name":"duration", "value": duration},
@@ -181,8 +182,8 @@ importScript([
 				"where": {
 					"and": [
 						totalsFilter,
-						{"gte": {"task.run.start_time": startTime.unix()}},
-						{"lt": {"task.run.start_time": endTime.unix()}}
+						{"gte": {"task.run.scheduled": startTime.unix()}},
+						{"lt": {"task.run.scheduled": endTime.unix()}}
 					]
 				},
 				"format": "list",
@@ -193,7 +194,7 @@ importScript([
 		}//try
 
 		details.data.forall(function(d){
-			d.start=Date.newInstance(d.start);
+			d.request=Date.newInstance(d.request);
 		});
 
 
@@ -218,7 +219,7 @@ importScript([
 			],
 			"axis": {
 				"x": {
-					"value":"start",
+					"value":"request",
 					"format":"{{.|format('NNN dd, HH:mm')}}",
 					"size": 50
 				},
@@ -257,7 +258,7 @@ importScript([
 					"where": {
 						"and": [
 							(d.revision ? {"eq": {"build.revision": d.revision}} : true),
-							{"eq": {"task.run.start_time": d.start.unix()}},
+							{"eq": {"task.run.scheduled": d.request.unix()}},
 							{"eq": {"build.branch": d.branch}},
 							totalsFilter
 						]
@@ -270,13 +271,13 @@ importScript([
 			}//try
 
 			var action = details.data[0].action;
-			if (action.timings!==undefined){
+			if (action && action.timings!==undefined){
 				var timings = qb.sort(action.timings, "order");
 				action.timings = timings;
 			}//endif
 			if (Thread.currentThread===detailThread) {
 				//ONLY UPDATE IF THIS IS STILL THE LAST ONE CLICKED
-				details.data.forall(function(d){d.action.timings=undefined;});
+				details.data.forall(function(d){if (d.action) d.action.timings=undefined;});
 				$("#raw_activedata").html(RECORD.expand({"json": convert.String2HTML(convert.value2json(Array.unwrap(details.data)))}));
 				showTimeline(action, timings);
 			}//endif

@@ -5,6 +5,7 @@
 function* get_bb_times(){
 	var BAR_HEIGHT = 30;
 	var BAR_SPACING = "20%";
+	var CHART_PADDING = 50;
 
 	var CHART_MULTIPLE=1.0;
 	if (BAR_SPACING.right(1) == "%") {
@@ -20,15 +21,8 @@ function* get_bb_times(){
 		"and": [
 			{
 				"eq": {
-					"build.product": "firefox",
 					"action.buildbot_status": "success"
 				}
-			},
-			{
-				"or": [
-					{"missing": "build.type"},
-					{"in": {"build.type": ["pgo", "debug"]}}
-				]
 			},
 			{"in": {"build.branch": ["try"]}}
 		]
@@ -66,7 +60,7 @@ function* get_bb_times(){
 				{
 					"name": "Platform",
 					"allowNulls": false,
-					"domain": Mozilla.Builds.Platform.getActiveDataDomain()
+					"domain": Mozilla.Builds.BB_Platform.getActiveDataDomain()
 				},
 				{
 					"name": "Type",
@@ -121,7 +115,7 @@ function* get_bb_times(){
 				{
 					"name": "Platform",
 					"allowNulls": false,
-					"domain": Mozilla.Builds.Platform.getActiveDataDomain()
+					"domain": Mozilla.Builds.BB_Platform.getActiveDataDomain()
 				},
 				{
 					"name": "Type",
@@ -160,12 +154,12 @@ function* get_bb_times(){
     var all_actions = timings.all_actions;
 	var build_actions = timings.build_actions;
 
-	$("#bb_chart").height(build_actions.length * BAR_HEIGHT * CHART_MULTIPLE);
+	$("#bb_chart").height(build_actions.length * BAR_HEIGHT * CHART_MULTIPLE+ CHART_PADDING);
 
 	var chart = gantt({
 		"target": "bb_chart",
 		"data": all_actions,
-		"style": {"height": build_actions.length * BAR_HEIGHT* CHART_MULTIPLE},
+		"style": {"height": build_actions.length * BAR_HEIGHT* CHART_MULTIPLE+ CHART_PADDING},
 		"axis": {
 			"x": {
 				"label": "Time",
@@ -185,7 +179,6 @@ function* get_bb_times(){
 				"style": {
 					"color": "#7f7f7f",
 					"opacity": 0.3,
-					"style": {"bar-spacing": BAR_SPACING}
 				},
 				"select": [
 					{"name": "x", "range": {"min": "build_request_time", "max": "build_start_time"}},
@@ -271,7 +264,7 @@ function* get_bb_times(){
 		domain = qb.sort(Array.UNION([domain, data.tests.select("index")]), ".");
 		if (domain.subtract(old_domain).length == 0) domain = build_actions;
 		chart.axis.y.domain._scale.domain(domain);
-		chart.style.height = domain.length * BAR_HEIGHT* CHART_MULTIPLE;
+		chart.style.height = domain.length * BAR_HEIGHT* CHART_MULTIPLE+ CHART_PADDING;
 		dynamicLayout();
 	}
 
@@ -407,7 +400,7 @@ function post_processing(build_averages,test_averages){
 	});
 	actions = actions.filter({"gt": {"test_end_time": 0}}).orderBy({"test_end_time": "desc"});
 
-	//Log.note(convert.value2json(actions));
+	Log.note(convert.value2json(actions));
 
 //        var actions = getAllActions();
 

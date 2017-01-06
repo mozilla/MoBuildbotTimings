@@ -206,23 +206,32 @@ function gantt(params){
 			var dy = axisY.domain._scale.range(chartHeight.range());
 
 			function exists(d){
-				return dy.domain().contains(selectY.value_accessor(d));
+				var y = selectY.value_accessor(d);
+				return dy.domain().contains(y);
 			}
 
 			function x(d){
-				return safe(dx(selectX.range.min_accessor(d)));
+				var output = dx(selectX.range.min_accessor(d));
+				if (DEBUG) Log.note("x="+output);
+				return safe(output);
 			}
 
 			function y(d){
-				return safe(dy(selectY.value_accessor(d)));
+				var output = dy(selectY.value_accessor(d));
+				if (DEBUG) Log.note("y="+output);
+				return safe(output);
 			}
 
 			function width(d){
-				return safe(dx(selectX.range.max_accessor(d) - selectX.range.min_accessor(d)));
+				var output = dx(selectX.range.max_accessor(d) - selectX.range.min_accessor(d))
+				if (DEBUG) Log.note("width="+output);
+				return safe(output);
 			}
 
 			function height(d){
-				return exists(d) ? safe(dy.bandwidth()) : 0;
+				var output = exists(d) ?  dy.bandwidth() : 0;
+				if (DEBUG) Log.note("height="+output);
+				return safe(output);
 			}
 
 			//SHOW BARS

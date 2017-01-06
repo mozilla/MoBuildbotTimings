@@ -24,8 +24,22 @@ Dimension.addEdges(false, Mozilla, [{
 			"name": "Type",
 			"field": "build.type",
 			"partitions": [
+				{
+					"name": "OPT",
+					"ordering": 2,
+					"style": {"color": "#f9cb9c"},
+					"value": "opt",
+					"esfilter": {
+						"or": [
+							{"term": {"build.type": "opt"}},
+							{"and":[
+								{"prefix": {"build.platform": "android"}},
+								{"missing": "build.type"}
+							]}
+						]
+					}
+				},
 				{"name": "Standard", "ordering": 0, "esfilter": {"missing": "build.type"}},
-				{"name": "OPT", "ordering": 2, "style": {"color": "#f9cb9c"}, "value": "opt", "esfilter": {"term": {"build.type": "opt"}}},
 				{"name": "PGO", "ordering": 1, "style": {"color": "#f9cb9c"}, "value": "pgo", "esfilter": {"term": {"build.type": "pgo"}}},
 				{"name": "Debug", "ordering": 3, "style": {"color": "#f6b26b"}, "value": "debug", "esfilter": {"term": {"build.type": "debug"}}}
 			]
@@ -48,37 +62,134 @@ Dimension.addEdges(false, Mozilla, [{
 			"field": "build.platform",
 
 			"partitions": [
-				{"name": "Linux32", "style": {"color": "#de4815"}, "value": "linux32", "esfilter": {"term": {"build.platform": "linux32"}}},
-				{"name": "Linux64", "style": {"color": "#de4815"}, "value": "linux64", "esfilter": {"term": {"build.platform": "linux64"}}},
-				{"name": "OSX64", "style": {"color": "#a4c739"}, "value": "macosx64", "esfilter": {"term": {"build.platform": "macosx64"}}},
-				{"name": "WINNT 5.2", "style": {"color": "#de4815"}, "value": "win5", "esfilter": {"prefix": {"build.name": "WINNT 5.2"}}},
-				{"name": "WINNT 6.1 x86-64", "style": {"color": "#de4815"}, "value": "win6", "esfilter": {"prefix": {"build.name": "WINNT 6.1 x86-64"}}},
-				{"name": "Windows XP 32-bit", "style": {"color": "#de4815"}, "value": "winxp", "esfilter": {"prefix": {"build.name": "Windows XP 32-bit"}}},
-				{"name": "Windows 7 32-bit", "style": {"color": "#de4815"}, "value": "win732", "esfilter": {"prefix": {"build.name": "Windows 7 32-bit"}}},
-				{"name": "Windows 7 VM 32-bit", "style": {"color": "#de4815"}, "value": "win732vm", "esfilter": {"prefix": {"build.name": "Windows 7 VM 32-bit"}}},
-				{"name": "Windows 7 VM-GFX 32-bit", "style": {"color": "#de4815"}, "value": "win732gfx", "esfilter": {"prefix": {"build.name": "Windows 7 VM-GFX 32-bit"}}},
-				{"name": "Windows 8 64-bit", "style": {"color": "#de4815"}, "value": "win864", "esfilter": {"prefix": {"build.name": "Windows 8 64-bit"}}},
-				{"name": "Windows 10 64-bit", "style": {"color": "#de4815"}, "value": "win1064", "esfilter": {"prefix": {"build.name": "Windows 10 64-bit"}}}
-			],
-			"esfilter": {"not": {"contains": {"run.key": "br-haz"}}}
-		},
-		{
-			"name": "Platform",
-			"field": "build.platform",
+				{
+					"name": "Android",
+					"style": {"color": "#de4815"},
+					"value": "android",
+					"esfilter": {
+						"and": [
+							{"prefix": {"build.platform": "android"}},
+							{
+								"or": [
+									{"term": {"build.product": "mobile"}},
+									{"missing": "build.product"}
+								]
+							}
+						]
+					}
+				},
+				{
+					"name": "Linux32", "style": {"color": "#de4815"}, "value": "linux32", "esfilter": {
+					"and": [
+						{"term": {"build.platform": "linux32"}},
+						{"term": {"build.product": "firefox"}}
+					]
+				}
+				},
+				{
+					"name": "Linux64", "style": {"color": "#de4815"}, "value": "linux64", "esfilter": {
+					"and": [
+						{"term": {"build.platform": "linux64"}},
+						{"term": {"build.product": "firefox"}}
+					]
+				}
+				},
+				{
+					"name": "OSX64", "style": {"color": "#a4c739"}, "value": "macosx64", "esfilter": {
+					"and": [
+						{"term": {"build.platform": "macosx64"}},
+						{"term": {"build.product": "firefox"}}
+					]
+				}
 
-			"partitions": [
-				{"name": "Linux32", "style": {"color": "#de4815"}, "value": "linux32", "esfilter": {"term": {"build.platform": "linux32"}}},
-				{"name": "Linux64", "style": {"color": "#de4815"}, "value": "linux64", "esfilter": {"term": {"build.platform": "linux64"}}},
-				{"name": "OSX64", "style": {"color": "#a4c739"}, "value": "macosx64", "esfilter": {"term": {"build.platform": "macosx64"}}},
-				{"name": "win32", "style": {"color": "#de4815"}, "value": "win32", "esfilter": {"term": {"build.platform": "win32"}}},
-				{"name": "win64", "style": {"color": "#de4815"}, "value": "win64", "esfilter": {"term": {"build.platform": "win64"}}}
+				},
+				{
+					"name": "WINNT 5.2", "style": {"color": "#de4815"}, "value": "win5", "esfilter": {
+					"and": [
+						{"prefix": {"build.name": "WINNT 5.2"}},
+						{"term": {"build.product": "firefox"}}
+					]
+				}
+
+				},
+				{
+					"name": "WINNT 6.1 x86-64", "style": {"color": "#de4815"}, "value": "win6", "esfilter": {
+					"and": [
+						{"prefix": {"build.name": "WINNT 6.1 x86-64"}},
+						{"term": {"build.product": "firefox"}}
+					]
+				}
+				},
+				{
+					"name": "Windows XP 32-bit", "style": {"color": "#de4815"}, "value": "winxp", "esfilter": {
+					"and": [
+						{"prefix": {"build.name": "Windows XP 32-bit"}},
+						{"term": {"build.product": "firefox"}}
+					]
+				}
+				},
+				{
+					"name": "Windows 7 32-bit", "style": {"color": "#de4815"}, "value": "win732", "esfilter": {
+					"and": [
+						{"prefix": {"build.name": "Windows 7 32-bit"}},
+						{"term": {"build.product": "firefox"}}
+					]
+				}
+				},
+				{
+					"name": "Windows 7 VM 32-bit", "style": {"color": "#de4815"}, "value": "win732vm", "esfilter": {
+					"and": [
+						{"prefix": {"build.name": "Windows 7 VM 32-bit"}},
+						{"term": {"build.product": "firefox"}}
+					]
+				}
+				},
+				{
+					"name": "Windows 7 VM-GFX 32-bit", "style": {"color": "#de4815"}, "value": "win732gfx", "esfilter": {
+					"and": [
+						{"prefix": {"build.name": "Windows 7 VM-GFX 32-bit"}},
+						{"term": {"build.product": "firefox"}}
+					]
+				}
+				},
+				{
+					"name": "Windows 8 64-bit", "style": {"color": "#de4815"}, "value": "win864", "esfilter": {
+					"and": [
+						{"prefix": {"build.name": "Windows 8 64-bit"}},
+						{"term": {"build.product": "firefox"}}
+					]
+				}
+				},
+				{
+					"name": "Windows 10 64-bit", "style": {"color": "#de4815"}, "value": "win1064", "esfilter": {
+					"and": [
+						{"prefix": {"build.name": "Windows 10 64-bit"}},
+						{"term": {"build.product": "firefox"}}
+					]
+				}
+				}
 			],
 			"esfilter": {"not": {"contains": {"run.key": "br-haz"}}}
 		},
+		//{
+		//	"name": "Platform",
+		//	"field": "build.platform",
+        //
+		//	"partitions": [
+		//		{"name": "Linux32", "style": {"color": "#de4815"}, "value": "linux32", "esfilter": {"term": {"build.platform": "linux32"}}},
+		//		{"name": "Linux64", "style": {"color": "#de4815"}, "value": "linux64", "esfilter": {"term": {"build.platform": "linux64"}}},
+		//		{"name": "OSX64", "style": {"color": "#a4c739"}, "value": "macosx64", "esfilter": {"term": {"build.platform": "macosx64"}}},
+		//		{"name": "win32", "style": {"color": "#de4815"}, "value": "win32", "esfilter": {"term": {"build.platform": "win32"}}},
+		//		{"name": "win64", "style": {"color": "#de4815"}, "value": "win64", "esfilter": {"term": {"build.platform": "win64"}}}
+		//	],
+		//	"esfilter": {"not": {"contains": {"run.key": "br-haz"}}}
+		//},
 		{
 			"name": "TC_Platform",
 			"field": "build.platform",
 			"partitions": [
+				{"name": "android 4.0", "style": {"color": "#de4815"}, "value": "android40", "esfilter": {"term": {"build.platform": "android-4-0-armv7-api15"}}},
+				{"name": "android 4.3", "style": {"color": "#de4815"}, "value": "android43", "esfilter": {"term": {"build.platform": "android-4-3-armv7-api15"}}},
 				{"name": "Linux32", "style": {"color": "#de4815"}, "value": "linux32", "esfilter": {"term": {"build.platform": "linux32"}}},
 				{"name": "Linux64", "style": {"color": "#de4815"}, "value": "linux64", "esfilter": {"term": {"build.platform": "linux64"}}},
 				//{"name": "OSX 10.10", "style": {"color": "#a4c739"}, "value": "macos1010", "esfilter": {"term": {"build.platform": "osx-10-10"}}},

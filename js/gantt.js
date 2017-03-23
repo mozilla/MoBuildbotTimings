@@ -12,7 +12,7 @@ importScript("../modevlib/qb/qb.js");
 
 function gantt(params){
 
-	var DEBUG=true;
+	var DEBUG=false;
 
 
 	var target = params.target;
@@ -164,7 +164,7 @@ function gantt(params){
 
 		chartWidth.range([0, coalesce(Map.get(params, "style.width"), div.width())]);
 		chartHeight.range([0, coalesce(Map.get(params, "style.height"), div.height())]);
-	}
+	}//endif
 
 	//STYLE THE AXIS, AND LINES
 	//Map.forall(params.axis, function(a, _axis){

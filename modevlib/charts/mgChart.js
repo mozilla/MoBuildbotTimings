@@ -212,22 +212,23 @@ importScript("tools.js");
 
 		var xa = qb.get(x_accessor);
 		var ya = qb.get(y_accessor);
-		data.forall(function(d){
-			data.forall(function(e, i){
-				if (e!==d && ya(d)==ya(e)){
-					if (xa(d) instanceof Date){
-						if (convert.Date2milli(xa(d))==convert.Date2milli(xa(e))){
-							data[i]=undefined;
-						}//endif
-					}else{
-						if (xa(d)==xa(e)) {
-							data[i]=undefined;
-						}//endif
-					}//endif
-				}
+		(function(){
+			// CHARTING LIB CAN NOT HANDLE TWO DOT IN SAME LOCATION
+			var lookup = {};
+			data.forall(function(d, i){
+				var y =ya(d);
+				var x =convert.Date2milli(xa(d));
+				var t = coalesce(lookup[y], {});
+				lookup[y] = t;
+				if (t[x]==null) {
+					data[i]=undefined;
+				}else{
+					t[x] = d;
+				}//endif
 			});
-		});
+		})();
 		data = data.mapExists(function(d){return d;});
+
 
 
 		var chartParams = {

@@ -216,11 +216,11 @@ importScript("tools.js");
 			// CHARTING LIB CAN NOT HANDLE TWO DOT IN SAME LOCATION
 			var lookup = {};
 			data.forall(function(d, i){
-				var y =ya(d);
-				var x =convert.Date2milli(xa(d));
+				var y = aMath.round(ya(d), {"digits": 3});
+				var x = Math.round(convert.Date2milli(xa(d)));
 				var t = coalesce(lookup[y], {});
 				lookup[y] = t;
-				if (t[x]==null) {
+				if (t[x]!=null) {
 					data[i]=undefined;
 				}else{
 					t[x] = d;

@@ -168,7 +168,7 @@ importScript([
             duration = {"div": [{"sub": [END_TIME_FIELD, START_TIME_FIELD]}, 60], "default": 0}
         }//endif
 
-		a = Log.action("Loading "+count.data.count+" tests", true);
+		a = Log.action("Loading "+count.data.count+" tests (limit 1000)", true);
 		try{
 			var details = yield (search({
 				"from":"task",
@@ -191,7 +191,7 @@ importScript([
 					]
 				},
 				"format": "list",
-				"limit": 100000
+				"limit": 1000
 			}))
 		}finally{
 			Log.actionDone(a);

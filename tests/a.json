@@ -1,0 +1,205 @@
+{
+    "task": {
+        "signing": {
+            "cert": [
+                null
+            ]
+        },
+        "features": [],
+        "deadline": 1479937065.908,
+        "id": "GEkDtYY5Ry64fVg1QGr-Mg",
+        "group": {
+            "id": "LME4F38PTvq_fc27aM2ZIw"
+        },
+        "artifacts": [],
+        "priority": "normal",
+        "state": "exception",
+        "version": 1,
+        "env": [
+            {
+                "name": "GECKO_HEAD_REV",
+                "value": "3d5f9d1555743f579a5340ab06c8626cacc3f87b"
+            },
+            {
+                "name": "MOZHARNESS_URL",
+                "value": "https://queue.taskcluster.net/v1/task/E0utbC16SxO1e5DW38ZQMw/artifacts/public/build/mozharness.zip"
+            },
+            {
+                "name": "GECKO_HEAD_REPOSITORY",
+                "value": "https://hg.mozilla.org/try/"
+            },
+            {
+                "name": "MOZHARNESS_CONFIG",
+                "value": "remove_executables.py unittests/mac_unittest.py"
+            },
+            {
+                "name": "MOZHARNESS_SCRIPT",
+                "value": "desktop_unittest.py"
+            },
+            {
+                "name": "MOZILLA_BUILD_URL",
+                "value": "https://queue.taskcluster.net/v1/task/E0utbC16SxO1e5DW38ZQMw/artifacts/public/build/target.dmg"
+            }
+        ],
+        "scopes": [],
+        "run": {
+            "scheduled": 1479937126.815,
+            "status": "deadline-exceeded",
+            "state": "exception",
+            "reason_created": "exception",
+            "end_time": 1479937126.815
+        },
+        "tags": [
+            {
+                "name": "link",
+                "value": "https://hg.mozilla.org/try//raw-file/3d5f9d1555743f579a5340ab06c8626cacc3f87b/taskcluster/scripts/tester/test-macosx.sh"
+            },
+            {
+                "name": "createdForUser",
+                "value": "kkoorts@mozilla.com"
+            },
+            {
+                "name": "owner",
+                "value": "kkoorts@mozilla.com"
+            },
+            {
+                "name": "source",
+                "value": "https://hg.mozilla.org/try//file/3d5f9d1555743f579a5340ab06c8626cacc3f87b/taskcluster/ci/desktop-test"
+            },
+            {
+                "name": "description",
+                "value": "Mochitest webgl run"
+            },
+            {
+                "name": "chunks.total",
+                "value": "3"
+            },
+            {
+                "name": "treeherderEnv",
+                "value": "[\"production\", \"staging\"]"
+            }
+        ],
+        "expires": 1481060265.908,
+        "worker": {
+            "type": "gecko-t-osx-10-10"
+        },
+        "dependencies": "E0utbC16SxO1e5DW38ZQMw",
+        "scheduler": {
+            "id": "gecko-level-1"
+        },
+        "retries": {
+            "total": 5,
+            "remaining": 5
+        },
+        "runs": [
+            {
+                "scheduled": 1479937126.815,
+                "status": "deadline-exceeded",
+                "state": "exception",
+                "reason_created": "exception",
+                "end_time": 1479937126.815
+            }
+        ],
+        "created": 1479850665.908,
+        "command": "\"./test-macosx.sh\" \"--no-read-buildbot-config\" \"--installer-url=https://queue.taskcluster.net/v1/task/E0utbC16SxO1e5DW38ZQMw/artifacts/public/build/target.dmg\" \"--test-packages-url=https://queue.taskcluster.net/v1/task/E0utbC16SxO1e5DW38ZQMw/artifacts/public/build/target.test_packages.json\" \"--mochitest-suite=mochitest-gl\" \"--total-chunk=3\" \"--this-chunk=3\" \"--download-symbols=true\"",
+        "provisioner": {
+            "id": "tc-worker-provisioner"
+        },
+        "routes": [
+            "tc-treeherder.v2.try.3d5f9d1555743f579a5340ab06c8626cacc3f87b.156269",
+            "tc-treeherder-stage.v2.try.3d5f9d1555743f579a5340ab06c8626cacc3f87b.156269"
+        ],
+        "requires": "all-completed"
+    },
+    "run": {
+        "machine": {
+            "platform": "osx-10-10"
+        },
+        "suite": {
+            "flavor": "gl",
+            "fullname": "mochitest-gl",
+            "name": "mochitest"
+        },
+        "chunk": 3,
+        "name": "desktop-test-macosx64/debug-mochitest-webgl-3"
+    },
+    "repo": {
+        "changeset": {
+            "files": [],
+            "description": "try: -b do -p linux64,linux64-st-an,macosx64,win32,win64 -u all -t none",
+            "author": "Otto Länd <bind-autoland@mozilla.com>",
+            "id12": "3d5f9d155574",
+            "date": 1479850500,
+            "id": "3d5f9d1555743f579a5340ab06c8626cacc3f87b"
+        },
+        "index": 900017,
+        "parents": "12154b0d7ef89be0b4a71968ab008db9d3fcc311",
+        "branch": {
+            "last_used": 1479830487,
+            "description": "Push here to test changes before landing",
+            "parent_name": "Mozilla top level repositories",
+            "url": "https://hg.mozilla.org/try",
+            "locale": "en-US",
+            "etl": {
+                "timestamp": 1479830724.358588
+            },
+            "name": "try"
+        },
+        "push": {
+            "date": 1479850550,
+            "user": "kkoorts@mozilla.com",
+            "id": 156269
+        },
+        "etl": {
+            "timestamp": 1479911223.498233
+        }
+    },
+    "build": {
+        "revision12": "3d5f9d155574",
+        "url": "https://queue.taskcluster.net/v1/task/E0utbC16SxO1e5DW38ZQMw/artifacts/public/build/target.dmg",
+        "platform": "osx-10-10",
+        "branch": "try",
+        "date": 1479850550,
+        "type": "debug",
+        "revision": "3d5f9d1555743f579a5340ab06c8626cacc3f87b"
+    },
+    "_id": "tc.420010:42000341.62",
+    "treeherder": {
+        "jobKind": "test",
+        "groupSymbol": "tc-M",
+        "collection": {
+            "debug": true
+        },
+        "machine": {
+            "platform": "osx-10-10"
+        },
+        "groupName": "Mochitests executed by TaskCluster",
+        "tier": 2,
+        "symbol": "gl3"
+    },
+    "etl": {
+        "machine": {
+            "python": "CPython",
+            "os": "Linux4.4.0-45-generic",
+            "name": "ip-172-31-0-231"
+        },
+        "source": {
+            "name": "Pulse block",
+            "timestamp": 1479937144.371954,
+            "bucket": "active-data-task-cluster-logger",
+            "source": {
+                "count": 42000341,
+                "source": {
+                    "code": "tc"
+                },
+                "type": "join",
+                "id": 42000341
+            },
+            "type": "aggregation",
+            "id": 420010
+        },
+        "type": "join",
+        "id": 62,
+        "timestamp": 1479951192.32088
+    }
+}

@@ -230,6 +230,7 @@ importScript("tools.js");
 		data = data.mapExists(function(d){return d;});
 
 
+
 		var chartParams = {
 			title: Map.get(params, "title.label"),
 			description: Map.get(params, "title.description"),

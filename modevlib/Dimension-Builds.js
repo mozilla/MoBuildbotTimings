@@ -169,7 +169,7 @@ Dimension.addEdges(false, Mozilla, [{
 				}
 				}
 			],
-			"esfilter": {"not": {"contains": {"run.key": "br-haz"}}}
+			"esfilter": {"not": {"eq": {"run.key": "br-haz"}}}
 		},
 		//{
 		//	"name": "Platform",
@@ -182,7 +182,7 @@ Dimension.addEdges(false, Mozilla, [{
 		//		{"name": "win32", "style": {"color": "#de4815"}, "value": "win32", "esfilter": {"term": {"build.platform": "win32"}}},
 		//		{"name": "win64", "style": {"color": "#de4815"}, "value": "win64", "esfilter": {"term": {"build.platform": "win64"}}}
 		//	],
-		//	"esfilter": {"not": {"contains": {"run.key": "br-haz"}}}
+		//	"esfilter": {"not": {"eq": {"run.key": "br-haz"}}}
 		//},
 		{
 			"name": "TC_Platform",
@@ -205,7 +205,7 @@ Dimension.addEdges(false, Mozilla, [{
 				{"name": "windows2012-32", "style": {"color": "#136bab"}, "value": "win1232", "esfilter": {"in": {"build.platform": ["windows-2012-32", "windows2012-32"]}}},
 				{"name": "windows2012-64", "style": {"color": "#136bab"}, "value": "win2164", "esfilter": {"term": {"build.platform":"windows2012-64" }}}
 			],
-			"esfilter": {"not": {"contains": {"run.key": "br-haz"}}}
+			"esfilter": {"not": {"eq": {"run.key": "br-haz"}}}
 		},
 		{"name": "Product", "field": "build.product",
 			"partitions": [
@@ -280,7 +280,7 @@ Dimension.addEdges(false, Mozilla, [{
 				{"name": "xpcshell", "value": "xpcshell", "esfilter": {"term": {"run.suite": "xpcshell"}}},
 				{"name": "xperf", "value": "xperf", "esfilter": {"term": {"run.suite": "xperf"}}}
 			],
-			"esfilter": {"not": {"contains": {"run.key": "br-haz"}}}
+			"esfilter": {"not": {"eq": {"run.key": "br-haz"}}}
 		},
 
 		{

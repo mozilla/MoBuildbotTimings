@@ -400,7 +400,7 @@ function post_processing(build_averages,test_averages){
 	});
 	actions = actions.filter({"gt": {"test_end_time": 0}}).orderBy({"test_end_time": "desc"});
 
-	Log.note(convert.value2json(actions));
+	// Log.note(convert.value2json(actions));
 
 //        var actions = getAllActions();
 
